@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spreadsheet Processor - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="View, filter, and export CSV/Excel files locally in your browser.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+    table th, table td {
+      border-bottom: 1px solid var(--border-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      table th, table td {
+        border-bottom-color: var(--border-dark);
+      }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="📊 Spreadsheet Processor" data-zh="📊 表格处理">📊 Spreadsheet Processor</h1>
+      <p class="text-lg text-secondary" data-en="View, filter, and export CSV or Excel files locally. Your data stays private." data-zh="本地查看、筛选并导 CSV 或 Excel 文件。数据安全私密。">
+        View, filter, and export CSV or Excel files locally. Your data stays private.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Controls Section -->
+      <div class="lg:col-span-1 space-y-6">
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Upload & Controls" data-zh="上传与控制">Upload & Controls</h2>
+          
+          <!-- File Upload -->
+          <input type="file" id="file-input" class="hidden" accept=".csv,.xls,.xlsx">
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-6 text-center cursor-pointer mb-6">
+            <p class="text-secondary" data-en="Drag & drop .csv, .xls, .xlsx files, or click." data-zh="拖拽 .csv, .xls, .xlsx 文件到此处，或点击。">
+              Drag & drop .csv, .xls, .xlsx files, or click.
+            </p>
+          </div>
+
+          <!-- Search -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2" data-en="Search" data-zh="搜索">Search</label>
+            <input type="text" id="search-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="Search data..." data-en-placeholder="Search data..." data-zh-placeholder="搜索数据...">
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-4">
+            <button id="export-btn" class="flex-1 btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Export as CSV" data-zh="导出为 CSV">
+              Export as CSV
+            </button>
+            <button id="clear-btn" class="flex-1 btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Clear Data" data-zh="清空数据">
+              Clear Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Preview Section -->
+      <div class="lg:col-span-3">
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Data Preview" data-zh="数据预览">Data Preview</h2>
+          <div class="border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg overflow-hidden">
+            <div class="overflow-x-auto max-h-[500px]">
+              <table class="w-full">
+                <thead id="table-head" class="bg-[var(--bg-light)] dark:bg-[var(--card-dark)] sticky top-0">
+                  <!-- Headers will be inserted here -->
+                </thead>
+                <tbody id="table-body">
+                  <tr>
+                    <td colspan="10" class="p-4 text-center text-secondary" data-en="Upload a file to see data preview..." data-zh="上传文件以查看预览...">
+                      Upload a file to see data preview...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Spreadsheet Processor Logic
+    class SpreadsheetProcessor {
+      constructor() {
+        this.fileInput = document.getElementById('file-input');
+        this.dropZone = document.getElementById('drop-zone');
+        this.searchInput = document.getElementById('search-input');
+        this.exportBtn = document.getElementById('export-btn');
+        this.clearBtn = document.getElementById('clear-btn');
+        this.tableHead = document.getElementById('table-head');
+        this.tableBody = document.getElementById('table-body');
+        this.status = document.getElementById('status');
+        
+        this.rawData = [];
+        this.filteredData = [];
+        this.headers = [];
+        this.fileName = '';
+        
+        this.initializeEventListeners();
+        this.updateTable();
+      }
+      
+      initializeEventListeners() {
+        // File input
+        this.fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+        
+        // Drop zone
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.add('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('dragleave', () => {
+          this.dropZone.classList.remove('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.remove('border-[var(--accent)]');
+          this.handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Search
+        this.searchInput.addEventListener('input', () => this.filterData());
+        
+        // Buttons
+        this.exportBtn.addEventListener('click', () => this.exportCSV());
+        this.clearBtn.addEventListener('click', () => this.clearData());
+      }
+      
+      handleFile(file) {
+        if (!file) return;
+        
+        this.fileName = file.name;
+        this.showStatus('Loading file...');
+        
+        if (file.name.endsWith('.csv')) {
+          this.loadCSV(file);
+        } else if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+          this.loadExcel(file);
+        } else {
+          this.showStatus('Unsupported file format.', true);
+        }
+      }
+      
+      loadCSV(file) {
+        if (!window.Papa) {
+          this.showStatus('PapaParse library not loaded.', true);
+          return;
+        }
+        
+        Papa.parse(file, {
+          complete: (results) => {
+            this.processData(results.data);
+            this.showStatus(`Loaded ${this.rawData.length} rows from CSV.`);
+          },
+          error: (error) => {
+            console.error('CSV parse error:', error);
+            this.showStatus('Failed to parse CSV file.', true);
+          },
+          skipEmptyLines: true,
+          header: false
+        });
+      }
+      
+      loadExcel(file) {
+        if (!window.XLSX) {
+          this.showStatus('XLSX library not loaded.', true);
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            this.processData(json);
+            this.showStatus(`Loaded ${this.rawData.length} rows from Excel.`);
+          } catch (error) {
+            console.error('Excel parse error:', error);
+            this.showStatus('Failed to parse Excel file.', true);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      
+      processData(data) {
+        if (data.length === 0) return;
+        
+        this.headers = data[0];
+        this.rawData = data.slice(1).map(row => {
+          let obj = {};
+          this.headers.forEach((header, index) => {
+            obj[header] = row[index] || '';
+          });
+          return obj;
+        });
+        
+        this.filterData();
+      }
+      
+      filterData() {
+        const searchTerm = this.searchInput.value.toLowerCase();
+        
+        if (!searchTerm) {
+          this.filteredData = [...this.rawData];
+        } else {
+          this.filteredData = this.rawData.filter(row => 
+            Object.values(row).some(value => 
+              String(value).toLowerCase().includes(searchTerm)
+            )
+          );
+        }
+        
+        this.updateTable();
+      }
+      
+      updateTable() {
+        this.tableHead.innerHTML = '';
+        this.tableBody.innerHTML = '';
+        
+        if (this.rawData.length === 0) {
+          this.tableBody.innerHTML = `
+            <tr>
+              <td colspan="10" class="p-4 text-center text-secondary">
+                Upload a file to see data preview...
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        // Add headers
+        const headerRow = this.tableHead.insertRow();
+        this.headers.forEach(header => {
+          const th = document.createElement('th');
+          th.className = 'p-3 text-sm font-semibold text-left';
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        
+        // Add data rows (limit to 100 for performance)
+        this.filteredData.slice(0, 100).forEach(row => {
+          const tr = this.tableBody.insertRow();
+          this.headers.forEach(header => {
+            const td = tr.insertCell();
+            td.className = 'p-3 text-sm text-secondary truncate max-w-xs';
+            td.textContent = row[header] || '';
+            td.title = row[header] || '';
+          });
+        });
+        
+        // Show count
+        if (this.filteredData.length > 100) {
+          const countRow = this.tableBody.insertRow();
+          const cell = countRow.insertCell();
+          cell.colSpan = this.headers.length;
+          cell.className = 'p-3 text-sm text-center text-secondary italic';
+          cell.textContent = `Showing 100 of ${this.filteredData.length} rows`;
+        }
+      }
+      
+      exportCSV() {
+        if (this.filteredData.length === 0) {
+          this.showStatus('No data to export.', true);
+          return;
+        }
+        
+        let csv = this.headers.join(',') + '\n';
+        
+        this.filteredData.forEach(row => {
+          const values = this.headers.map(header => {
+            let value = String(row[header] || '');
+            // Escape quotes
+            value = value.replace(/"/g, '""');
+            // Quote if contains comma, quote, or newline
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              value = `"${value}"`;
+            }
+            return value;
+          });
+          csv += values.join(',') + '\n';
+        });
+        
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = this.fileName.replace(/\.[^/.]+$/, "") + '_filtered.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        this.showStatus(`Exported ${this.filteredData.length} rows as CSV.`);
+      }
+      
+      clearData() {
+        this.rawData = [];
+        this.filteredData = [];
+        this.headers = [];
+        this.fileName = '';
+        this.searchInput.value = '';
+        this.fileInput.value = '';
+        this.updateTable();
+        this.showStatus('Data cleared.');
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh-placeholder')) {
+          el.setAttribute('placeholder', el.getAttribute('data-zh-placeholder'));
+        } else {
+          el.setAttribute('placeholder', el.getAttribute('data-en-placeholder'));
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize Spreadsheet Processor
+    const spreadsheetProcessor = new SpreadsheetProcessor();
+  </script>
+</body>
+</html>

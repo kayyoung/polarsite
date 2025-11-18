@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watermark Remover - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Remove watermarks from images locally in your browser.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+    #canvas-container {
+      position: relative;
+      background-color: #f5f5f5;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+      #canvas-container {
+        background-color: #2a2a2a;
+      }
+    }
+    #watermark-canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      cursor: crosshair;
+    }
+    .selection-rect {
+      position: absolute;
+      border: 2px solid #ff0000;
+      background-color: rgba(255, 0, 0, 0.1);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="💧 Watermark Remover" data-zh="💧 去除水印">💧 Watermark Remover</h1>
+      <p class="text-lg text-secondary" data-en="Intelligently remove watermarks from images (PNG/JPG only)." data-zh="智能移除图片水印（仅支持PNG/JPG）。">
+        Intelligently remove watermarks from images (PNG/JPG only).
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Canvas Section -->
+      <div class="card p-6">
+        <div id="canvas-container" class="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg aspect-square border border-[var(--border-light)] dark:border-[var(--border-dark)]">
+          <div id="canvas-placeholder" class="absolute inset-0 flex items-center justify-center text-secondary" data-en="Upload an image to begin..." data-zh="上传图片以开始...">
+            Upload an image to begin...
+          </div>
+          <canvas id="watermark-canvas" class="absolute inset-0 w-full h-full"></canvas>
+          <!-- Selection rectangles will be added here -->
+        </div>
+        
+        <p class="mt-4 text-sm text-secondary text-center" data-en="Tip: Draw boxes over watermarks. Click &quot;Apply Removal&quot; to preview." data-zh="提示：在水印上绘制矩形框，点击"应用去除"预览效果。">
+          Tip: Draw boxes over watermarks. Click "Apply Removal" to preview.
+        </p>
+      </div>
+
+      <!-- Controls Section -->
+      <div class="space-y-6">
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Upload Image" data-zh="上传图片">Upload Image</h2>
+          
+          <input type="file" id="file-input" class="hidden" accept=".png,.jpg,.jpeg">
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer">
+            <p class="text-secondary" data-en="Drag & drop .png, .jpg file here, or click." data-zh="拖拽 .png, .jpg 文件到此处，或点击。">
+              Drag & drop .png, .jpg file here, or click.
+            </p>
+          </div>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Tools" data-zh="工具">Tools</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <button id="apply-btn" class="btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Apply Removal" data-zh="应用去除">
+              Apply Removal
+            </button>
+            <button id="clear-btn" class="btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Clear Boxes" data-zh="清除选框">
+              Clear Boxes
+            </button>
+          </div>
+          
+          <button id="download-btn" class="w-full mt-4 btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Download Image" data-zh="下载图片">
+            Download Image
+          </button>
+          
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Watermark Remover Logic
+    class WatermarkRemover {
+      constructor() {
+        this.canvas = document.getElementById('watermark-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.canvasContainer = document.getElementById('canvas-container');
+        this.placeholder = document.getElementById('canvas-placeholder');
+        this.fileInput = document.getElementById('file-input');
+        this.dropZone = document.getElementById('drop-zone');
+        this.applyBtn = document.getElementById('apply-btn');
+        this.clearBtn = document.getElementById('clear-btn');
+        this.downloadBtn = document.getElementById('download-btn');
+        this.status = document.getElementById('status');
+        
+        this.originalImage = null;
+        this.isPreviewing = false;
+        this.selections = [];
+        this.isDrawing = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.currentRect = null;
+        
+        this.initializeEventListeners();
+      }
+      
+      initializeEventListeners() {
+        // File input
+        this.fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+        
+        // Drop zone
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.add('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('dragleave', () => {
+          this.dropZone.classList.remove('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.remove('border-[var(--accent)]');
+          this.handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Canvas drawing
+        this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+        this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+        this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+        this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+        
+        // Buttons
+        this.applyBtn.addEventListener('click', () => this.applyRemoval());
+        this.clearBtn.addEventListener('click', () => this.clearSelections());
+        this.downloadBtn.addEventListener('click', () => this.downloadImage());
+      }
+      
+      handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          this.showStatus('Please upload a PNG or JPG image.', true);
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.originalImage = new Image();
+          this.originalImage.onload = () => {
+            this.setupCanvas();
+            this.clearSelections();
+            this.placeholder.style.display = 'none';
+            this.showStatus('Image loaded. Draw boxes over watermarks.');
+          };
+          this.originalImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      setupCanvas() {
+        if (!this.originalImage) return;
+        
+        // Calculate canvas size to fit container while maintaining aspect ratio
+        const containerWidth = this.canvasContainer.clientWidth;
+        const containerHeight = this.canvasContainer.clientHeight;
+        const imageWidth = this.originalImage.width;
+        const imageHeight = this.originalImage.height;
+        
+        const containerAspect = containerWidth / containerHeight;
+        const imageAspect = imageWidth / imageHeight;
+        
+        let canvasWidth, canvasHeight;
+        
+        if (containerAspect > imageAspect) {
+          // Container is wider than image
+          canvasHeight = containerHeight;
+          canvasWidth = containerHeight * imageAspect;
+        } else {
+          // Container is taller than image
+          canvasWidth = containerWidth;
+          canvasHeight = containerWidth / imageAspect;
+        }
+        
+        this.canvas.width = imageWidth;
+        this.canvas.height = imageHeight;
+        this.canvas.style.width = canvasWidth + 'px';
+        this.canvas.style.height = canvasHeight + 'px';
+        
+        this.redrawCanvas();
+      }
+      
+      getCanvasCoordinates(clientX, clientY) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      }
+      
+      startDrawing(e) {
+        if (!this.originalImage || this.isPreviewing) return;
+        
+        this.isDrawing = true;
+        const coords = this.getCanvasCoordinates(e.clientX, e.clientY);
+        this.startX = coords.x;
+        this.startY = coords.y;
+        
+        this.currentRect = {
+          x: this.startX,
+          y: this.startY,
+          width: 0,
+          height: 0
+        };
+      }
+      
+      draw(e) {
+        if (!this.isDrawing || !this.currentRect) return;
+        
+        const coords = this.getCanvasCoordinates(e.clientX, e.clientY);
+        
+        this.currentRect.width = Math.abs(coords.x - this.startX);
+        this.currentRect.height = Math.abs(coords.y - this.startY);
+        this.currentRect.x = Math.min(coords.x, this.startX);
+        this.currentRect.y = Math.min(coords.y, this.startY);
+        
+        this.redrawCanvas();
+        
+        // Draw current selection
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        this.ctx.fillRect(this.currentRect.x, this.currentRect.y, this.currentRect.width, this.currentRect.height);
+        this.ctx.strokeStyle = '#ff0000';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(this.currentRect.x, this.currentRect.y, this.currentRect.width, this.currentRect.height);
+      }
+      
+      stopDrawing() {
+        if (!this.isDrawing || !this.currentRect) return;
+        
+        this.isDrawing = false;
+        
+        // Only add if rectangle is large enough
+        if (this.currentRect.width > 5 && this.currentRect.height > 5) {
+          this.selections.push({...this.currentRect});
+        }
+        
+        this.currentRect = null;
+        this.redrawCanvas();
+      }
+      
+      redrawCanvas() {
+        if (!this.originalImage) return;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw all selections
+        this.selections.forEach(rect => {
+          this.ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+          this.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+          this.ctx.strokeStyle = '#ff0000';
+          this.ctx.lineWidth = 2;
+          this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        });
+      }
+      
+      applyRemoval() {
+        if (!this.originalImage) {
+          this.showStatus('Please upload an image first.', true);
+          return;
+        }
+        
+        if (this.selections.length === 0) {
+          this.showStatus('Please draw at least one selection box.', true);
+          return;
+        }
+        
+        this.showStatus('Applying removal...');
+        this.applyBtn.disabled = true;
+        
+        // Clear canvas and redraw original image
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
+        
+        // Process each selection
+        this.selections.forEach(selection => {
+          this.removeWatermark(selection);
+        });
+        
+        this.isPreviewing = true;
+        this.downloadBtn.classList.remove('btn-secondary');
+        this.downloadBtn.classList.add('btn-primary');
+        
+        this.showStatus('Removal applied. Preview ready.');
+        this.applyBtn.disabled = false;
+      }
+      
+      removeWatermark(selection) {
+        // Simple inpainting using surrounding pixels
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const data = imageData.data;
+        
+        // Calculate average color from border pixels
+        let r = 0, g = 0, b = 0, count = 0;
+        const border = 2;
+        
+        for (let y = selection.y - border; y < selection.y + selection.height + border; y++) {
+          for (let x = selection.x - border; x < selection.x + selection.width + border; x++) {
+            if (x >= 0 && x < this.canvas.width && y >= 0 && y < this.canvas.height) {
+              if (x < selection.x || x >= selection.x + selection.width || 
+                  y < selection.y || y >= selection.y + selection.height) {
+                const i = (y * this.canvas.width + x) * 4;
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+                count++;
+              }
+            }
+          }
+        }
+        
+        if (count > 0) {
+          const avgR = Math.floor(r / count);
+          const avgG = Math.floor(g / count);
+          const avgB = Math.floor(b / count);
+          
+          // Fill selection with average color
+          this.ctx.fillStyle = `rgb(${avgR}, ${avgG}, ${avgB})`;
+          this.ctx.fillRect(selection.x, selection.y, selection.width, selection.height);
+        }
+      }
+      
+      clearSelections() {
+        this.selections = [];
+        this.isPreviewing = false;
+        this.downloadBtn.classList.add('btn-secondary');
+        this.downloadBtn.classList.remove('btn-primary');
+        
+        if (this.originalImage) {
+          this.redrawCanvas();
+        }
+        
+        this.showStatus('Selections cleared.');
+      }
+      
+      downloadImage() {
+        if (!this.originalImage) {
+          this.showStatus('Please upload an image first.', true);
+          return;
+        }
+        
+        if (!this.isPreviewing) {
+          this.showStatus('Please apply removal first.', true);
+          return;
+        }
+        
+        // Download the processed image
+        const link = document.createElement('a');
+        link.download = 'watermark_removed.png';
+        link.href = this.canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showStatus('Image downloaded successfully.');
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize Watermark Remover
+    const watermarkRemover = new WatermarkRemover();
+  </script>
+</body>
+</html>

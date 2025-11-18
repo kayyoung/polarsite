@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Processor - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Process images locally - remove metadata, compress, resize, and more.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-light);
+      outline: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .slider { background: var(--border-dark); }
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+    #preview-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+    .metadata-item {
+      padding: 8px 12px;
+      background: var(--bg-light);
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .metadata-item { background: var(--card-dark); }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="🖼️ Image Processor" data-zh="🖼️ 图片处理器">🖼️ Image Processor</h1>
+      <p class="text-lg text-secondary" data-en="Process images locally - remove metadata, compress, resize, and more." data-zh="本地处理图片 - 移除元数据、压缩、调整大小等">Process images locally - remove metadata, compress, resize, and more.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Left Column - Controls -->
+      <div class="space-y-6">
+        <!-- Upload Section -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Upload Image" data-zh="上传图片">Upload Image</h2>
+          <input type="file" id="file-input" class="hidden" accept="image/*">
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer mb-4">
+            <p class="text-secondary" data-en="Drag & drop image here, or click to select" data-zh="拖拽图片到此处，或点击选择">Drag & drop image here, or click to select</p>
+          </div>
+          <div id="file-info" class="text-sm text-secondary" style="display: none;"></div>
+        </div>
+
+        <!-- Resize Section -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Resize Image" data-zh="调整大小">Resize Image</h2>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Width (px)" data-zh="宽度 (像素)">Width (px)</label>
+              <input type="number" id="width-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="Auto" min="1">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Height (px)" data-zh="高度 (像素)">Height (px)</label>
+              <input type="number" id="height-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="Auto" min="1">
+            </div>
+          </div>
+          <label class="flex items-center mb-4">
+            <input type="checkbox" id="maintain-ratio" class="mr-2" checked>
+            <span class="text-sm" data-en="Maintain aspect ratio" data-zh="保持宽高比">Maintain aspect ratio</span>
+          </label>
+        </div>
+
+        <!-- Compression Section -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Compression" data-zh="压缩设置">Compression</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2" data-en="Quality (0.1-1.0)" data-zh="质量 (0.1-1.0)">Quality (0.1-1.0)</label>
+            <input type="range" id="quality-slider" class="slider w-full" min="0.1" max="1.0" step="0.1" value="0.8">
+            <div class="flex justify-between text-xs text-secondary mt-1">
+              <span data-en="Low" data-zh="低质量">Low</span>
+              <span id="quality-value">0.8</span>
+              <span data-en="High" data-zh="高质量">High</span>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2" data-en="Format" data-zh="格式">Format</label>
+            <select id="format-select" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg">
+              <option value="original" data-en="Original" data-zh="原始格式">Original</option>
+              <option value="jpeg">JPEG</option>
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Metadata Section -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Metadata" data-zh="元数据">Metadata</h2>
+          <div class="mb-4">
+            <label class="flex items-center mb-2">
+              <input type="checkbox" id="remove-metadata" class="mr-2">
+              <span class="text-sm" data-en="Remove all metadata" data-zh="移除所有元数据">Remove all metadata</span>
+            </label>
+            <p class="text-xs text-secondary" data-en="Remove EXIF, GPS, and other metadata" data-zh="移除EXIF、GPS和其他元数据">Remove EXIF, GPS, and other metadata</p>
+          </div>
+          <div id="metadata-display" class="text-xs text-secondary" style="display: none;">
+            <h3 class="font-medium mb-2" data-en="Current Metadata" data-zh="当前元数据">Current Metadata:</h3>
+            <div id="metadata-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Preview and Actions -->
+      <div class="space-y-6">
+        <!-- Preview Section -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Preview" data-zh="预览">Preview</h2>
+          <div id="preview-container" class="border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-4 text-center min-h-64 flex items-center justify-center">
+            <p class="text-secondary" data-en="Upload an image to see preview" data-zh="上传图片以查看预览">Upload an image to see preview</p>
+          </div>
+          <div id="image-stats" class="mt-4 text-sm text-secondary" style="display: none;"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Actions" data-zh="操作">Actions</h2>
+          <div class="space-y-3">
+            <button id="process-btn" class="w-full btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Process Image" data-zh="处理图片" disabled>Process Image</button>
+            <button id="download-btn" class="w-full btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Download Result" data-zh="下载结果" style="display: none;">Download Result</button>
+            <button id="reset-btn" class="w-full btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Reset" data-zh="重置">Reset</button>
+          </div>
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    class ImageProcessor {
+      constructor() {
+        this.originalImage = null;
+        this.processedImage = null;
+        this.originalWidth = 0;
+        this.originalHeight = 0;
+        this.originalFile = null;
+        
+        this.initializeElements();
+        this.bindEvents();
+      }
+      
+      initializeElements() {
+        this.fileInput = document.getElementById('file-input');
+        this.dropZone = document.getElementById('drop-zone');
+        this.widthInput = document.getElementById('width-input');
+        this.heightInput = document.getElementById('height-input');
+        this.maintainRatio = document.getElementById('maintain-ratio');
+        this.qualitySlider = document.getElementById('quality-slider');
+        this.qualityValue = document.getElementById('quality-value');
+        this.formatSelect = document.getElementById('format-select');
+        this.removeMetadata = document.getElementById('remove-metadata');
+        this.metadataDisplay = document.getElementById('metadata-display');
+        this.metadataList = document.getElementById('metadata-list');
+        this.previewContainer = document.getElementById('preview-container');
+        this.imageStats = document.getElementById('image-stats');
+        this.fileInfo = document.getElementById('file-info');
+        this.processBtn = document.getElementById('process-btn');
+        this.downloadBtn = document.getElementById('download-btn');
+        this.resetBtn = document.getElementById('reset-btn');
+        this.status = document.getElementById('status');
+      }
+      
+      bindEvents() {
+        // File upload events
+        this.fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.add('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('dragleave', () => {
+          this.dropZone.classList.remove('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.remove('border-[var(--accent)]');
+          this.handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Resize events
+        this.widthInput.addEventListener('input', () => this.updateHeight());
+        this.heightInput.addEventListener('input', () => this.updateWidth());
+        
+        // Quality slider
+        this.qualitySlider.addEventListener('input', (e) => {
+          this.qualityValue.textContent = e.target.value;
+        });
+        
+        // Action buttons
+        this.processBtn.addEventListener('click', () => this.processImage());
+        this.downloadBtn.addEventListener('click', () => this.downloadImage());
+        this.resetBtn.addEventListener('click', () => this.reset());
+      }
+      
+      handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          this.showStatus('Please select a valid image file.', true);
+          return;
+        }
+        
+        this.originalFile = file;
+        this.showFileInfo(file);
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.loadImage(e.target.result, file);
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      loadImage(src, file) {
+        const img = new Image();
+        img.onload = () => {
+          this.originalImage = img;
+          this.originalWidth = img.width;
+          this.originalHeight = img.height;
+          
+          // Set default dimensions
+          this.widthInput.value = img.width;
+          this.heightInput.value = img.height;
+          
+          this.showPreview(img);
+          this.extractMetadata(file);
+          this.processBtn.disabled = false;
+          this.showStatus('Image loaded successfully.');
+        };
+        img.src = src;
+      }
+      
+      showFileInfo(file) {
+        const size = (file.size / 1024).toFixed(2);
+        const info = `Name: ${file.name} | Size: ${size} KB | Type: ${file.type}`;
+        this.fileInfo.textContent = info;
+        this.fileInfo.style.display = 'block';
+      }
+      
+      showPreview(img) {
+        this.previewContainer.innerHTML = '';
+        const previewImg = document.createElement('img');
+        previewImg.src = img.src;
+        previewImg.id = 'preview-image';
+        this.previewContainer.appendChild(previewImg);
+        
+        this.imageStats.innerHTML = `Original: ${img.width} × ${img.height} pixels`;
+        this.imageStats.style.display = 'block';
+      }
+      
+      updateHeight() {
+        if (!this.maintainRatio.checked || !this.widthInput.value) return;
+        
+        const ratio = this.originalHeight / this.originalWidth;
+        const newHeight = Math.round(this.widthInput.value * ratio);
+        this.heightInput.value = newHeight;
+      }
+      
+      updateWidth() {
+        if (!this.maintainRatio.checked || !this.heightInput.value) return;
+        
+        const ratio = this.originalWidth / this.originalHeight;
+        const newWidth = Math.round(this.heightInput.value * ratio);
+        this.widthInput.value = newWidth;
+      }
+      
+      extractMetadata(file) {
+        // Basic file metadata
+        const metadata = {
+          'File Name': file.name,
+          'File Size': (file.size / 1024).toFixed(2) + ' KB',
+          'File Type': file.type,
+          'Last Modified': new Date(file.lastModified).toLocaleString()
+        };
+        
+        this.displayMetadata(metadata);
+        
+        // Try to extract EXIF data if available
+        if (file.type === 'image/jpeg') {
+          this.extractEXIF(file);
+        }
+      }
+      
+      extractEXIF(file) {
+        // Simplified EXIF extraction - in a real implementation, you'd use a library like exif-js
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const arr = new Uint8Array(e.target.result);
+          // Basic EXIF detection
+          let hasEXIF = false;
+          for (let i = 0; i < arr.length - 4; i++) {
+            if (arr[i] === 0x45 && arr[i+1] === 0x78 && arr[i+2] === 0x69 && arr[i+3] === 0x66) {
+              hasEXIF = true;
+              break;
+            }
+          }
+          
+          if (hasEXIF) {
+            this.metadataList.innerHTML += '<div class="metadata-item"><strong>EXIF Data:</strong> Present (will be removed if selected)</div>';
+          }
+        };
+        reader.readAsArrayBuffer(file.slice(0, 65536)); // Read first 64KB
+      }
+      
+      displayMetadata(metadata) {
+        this.metadataList.innerHTML = '';
+        Object.entries(metadata).forEach(([key, value]) => {
+          const item = document.createElement('div');
+          item.className = 'metadata-item';
+          item.innerHTML = `<strong>${key}:</strong> ${value}`;
+          this.metadataList.appendChild(item);
+        });
+        this.metadataDisplay.style.display = 'block';
+      }
+      
+      processImage() {
+        if (!this.originalImage) {
+          this.showStatus('Please upload an image first.', true);
+          return;
+        }
+        
+        this.showStatus('Processing image...');
+        this.processBtn.disabled = true;
+        
+        setTimeout(() => {
+          try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set dimensions
+            const width = parseInt(this.widthInput.value) || this.originalWidth;
+            const height = parseInt(this.heightInput.value) || this.originalHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw image
+            ctx.drawImage(this.originalImage, 0, 0, width, height);
+            
+            // Convert to selected format and quality
+            const format = this.formatSelect.value === 'original' ? 
+              this.getFormatFromFile(this.originalFile) : this.formatSelect.value;
+            const quality = parseFloat(this.qualitySlider.value);
+            
+            let mimeType;
+            switch (format) {
+              case 'jpeg':
+                mimeType = 'image/jpeg';
+                break;
+              case 'png':
+                mimeType = 'image/png';
+                break;
+              case 'webp':
+                mimeType = 'image/webp';
+                break;
+              default:
+                mimeType = this.originalFile.type;
+            }
+            
+            const dataURL = canvas.toDataURL(mimeType, quality);
+            
+            // Create new image for preview
+            const processedImg = new Image();
+            processedImg.onload = () => {
+              this.processedImage = processedImg;
+              this.showPreview(processedImg);
+              this.showProcessedStats(width, height, dataURL, format);
+              this.downloadBtn.style.display = 'block';
+              this.showStatus('Image processed successfully!');
+            };
+            processedImg.src = dataURL;
+            
+          } catch (error) {
+            console.error('Processing error:', error);
+            this.showStatus('Failed to process image.', true);
+          } finally {
+            this.processBtn.disabled = false;
+          }
+        }, 100);
+      }
+      
+      getFormatFromFile(file) {
+        if (file.type === 'image/jpeg') return 'jpeg';
+        if (file.type === 'image/png') return 'png';
+        if (file.type === 'image/webp') return 'webp';
+        return 'jpeg'; // default
+      }
+      
+      showProcessedStats(width, height, dataURL, format) {
+        const size = Math.round(dataURL.length * 0.75); // Approximate size
+        const sizeKB = (size / 1024).toFixed(2);
+        
+        this.imageStats.innerHTML = `
+          Original: ${this.originalWidth} × ${this.originalHeight} pixels<br>
+          Processed: ${width} × ${height} pixels | ${sizeKB} KB | ${format.toUpperCase()}
+        `;
+      }
+      
+      downloadImage() {
+        if (!this.processedImage) {
+          this.showStatus('No processed image to download.', true);
+          return;
+        }
+        
+        const format = this.formatSelect.value === 'original' ? 
+          this.getFormatFromFile(this.originalFile) : this.formatSelect.value;
+        const quality = parseFloat(this.qualitySlider.value);
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = parseInt(this.widthInput.value) || this.originalWidth;
+        const height = parseInt(this.heightInput.value) || this.originalHeight;
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(this.processedImage, 0, 0, width, height);
+        
+        let mimeType;
+        switch (format) {
+          case 'jpeg': mimeType = 'image/jpeg'; break;
+          case 'png': mimeType = 'image/png'; break;
+          case 'webp': mimeType = 'image/webp'; break;
+          default: mimeType = this.originalFile.type;
+        }
+        
+        const dataURL = canvas.toDataURL(mimeType, quality);
+        const link = document.createElement('a');
+        link.download = `processed_${Date.now()}.${format}`;
+        link.href = dataURL;
+        link.click();
+        
+        this.showStatus('Image downloaded successfully!');
+      }
+      
+      reset() {
+        this.originalImage = null;
+        this.processedImage = null;
+        this.originalFile = null;
+        
+        this.fileInput.value = '';
+        this.widthInput.value = '';
+        this.heightInput.value = '';
+        this.qualitySlider.value = '0.8';
+        this.qualityValue.textContent = '0.8';
+        this.formatSelect.value = 'original';
+        this.removeMetadata.checked = false;
+        
+        this.previewContainer.innerHTML = '<p class="text-secondary" data-en="Upload an image to see preview" data-zh="上传图片以查看预览">Upload an image to see preview</p>';
+        this.imageStats.style.display = 'none';
+        this.fileInfo.style.display = 'none';
+        this.metadataDisplay.style.display = 'none';
+        this.downloadBtn.style.display = 'none';
+        this.processBtn.disabled = true;
+        
+        this.showStatus('Reset completed.');
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh-placeholder')) {
+          el.setAttribute('placeholder', el.getAttribute('data-zh-placeholder'));
+        } else {
+          el.setAttribute('placeholder', el.getAttribute('data-en-placeholder'));
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize Image Processor
+    const imageProcessor = new ImageProcessor();
+  </script>
+</body>
+</html>

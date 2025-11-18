@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Converter - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Convert Markdown, TXT, and HTML to PDF securely in your browser.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+    .prose { max-width: none; }
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+      color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+        color: var(--text-dark);
+      }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="📄 PDF Converter" data-zh="📄 PDF 转换器">📄 PDF Converter</h1>
+      <p class="text-lg text-secondary" data-en="Convert Markdown, TXT, and HTML to PDF with perfect formatting. Your data never leaves your browser." data-zh="将 Markdown、TXT 和 HTML 转换为 PDF，格式完美保留。您的数据不会离开浏览器。">
+        Convert Markdown, TXT, and HTML to PDF with perfect formatting. Your data never leaves your browser.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Input Section -->
+      <div class="space-y-6">
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Input Content" data-zh="输入内容">Input Content</h2>
+          
+          <!-- File Upload -->
+          <input type="file" id="file-input" class="hidden" accept=".md,.txt,.html,.htm">
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer mb-4">
+            <p class="text-secondary" data-en="Drag & drop .md, .txt, .html files here, or click to select" data-zh="拖拽 .md, .txt, .html 文件到此处，或点击选择">
+              Drag & drop .md, .txt, .html files here, or click to select
+            </p>
+          </div>
+          
+          <!-- Text Input -->
+          <textarea id="text-input" class="w-full h-64 p-4 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg resize-none" placeholder="Or type/paste your content here..." data-en-placeholder="Or type/paste your content here..." data-zh-placeholder="或在此输入/粘贴内容..."></textarea>
+          
+          <!-- Controls -->
+          <div class="flex gap-4 mt-4">
+            <button id="convert-btn" class="flex-1 btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Convert to PDF" data-zh="转换为 PDF">
+              Convert to PDF
+            </button>
+            <button id="clear-btn" class="flex-1 btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Clear" data-zh="清空">
+              Clear
+            </button>
+          </div>
+          
+          <!-- Status -->
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold mb-4" data-en="Live Preview" data-zh="实时预览">Live Preview</h2>
+        <div id="preview" class="min-h-64 max-h-[500px] overflow-auto p-4 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg prose dark:prose-invert">
+          <p class="text-secondary" data-en="Enter content or upload a file to see preview..." data-zh="输入内容或上传文件以查看预览...">
+            Enter content or upload a file to see preview...
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // PDF Converter Logic
+    class PDFConverter {
+      constructor() {
+        this.textInput = document.getElementById('text-input');
+        this.fileInput = document.getElementById('file-input');
+        this.dropZone = document.getElementById('drop-zone');
+        this.convertBtn = document.getElementById('convert-btn');
+        this.clearBtn = document.getElementById('clear-btn');
+        this.preview = document.getElementById('preview');
+        this.status = document.getElementById('status');
+        this.currentFileType = 'md';
+        
+        this.initializeEventListeners();
+        this.updatePreview();
+      }
+      
+      initializeEventListeners() {
+        // Text input
+        this.textInput.addEventListener('input', () => {
+          this.currentFileType = 'md';
+          this.updatePreview();
+          this.checkContentLength();
+        });
+        
+        // File input
+        this.fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+        
+        // Drop zone
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.add('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('dragleave', () => {
+          this.dropZone.classList.remove('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.remove('border-[var(--accent)]');
+          this.handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Buttons
+        this.convertBtn.addEventListener('click', () => this.convertToPDF());
+        this.clearBtn.addEventListener('click', () => this.clear());
+      }
+      
+      handleFile(file) {
+        if (!file) return;
+        
+        // Check file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+          this.showStatus('File exceeds 5MB limit.', true);
+          return;
+        }
+        
+        // Determine file type
+        const fileName = file.name.toLowerCase();
+        if (fileName.endsWith('.txt')) {
+          this.currentFileType = 'txt';
+        } else if (fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+          this.currentFileType = 'html';
+        } else {
+          this.currentFileType = 'md';
+        }
+        
+        // Read file
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.textInput.value = e.target.result;
+          this.updatePreview();
+          this.checkContentLength();
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+      
+      checkContentLength() {
+        if (this.textInput.value.length > 30000) {
+          this.textInput.value = this.textInput.value.substring(0, 30000);
+          this.showStatus('Content exceeds 30,000 chars. Please split.', true);
+        }
+      }
+      
+      updatePreview() {
+        const text = this.textInput.value;
+        
+        if (!text.trim()) {
+          this.preview.innerHTML = '<p class="text-secondary">Enter content or upload a file to see preview...</p>';
+          return;
+        }
+        
+        if (this.currentFileType === 'txt') {
+          this.preview.innerHTML = `<pre class="whitespace-pre-wrap font-mono text-sm">${this.escapeHtml(text)}</pre>`;
+        } else if (this.currentFileType === 'html') {
+          this.preview.innerHTML = '<div class="p-4 text-secondary"><strong>HTML file loaded.</strong><br>Preview not shown, but conversion is ready.</div>';
+        } else {
+          // Markdown
+          if (window.marked) {
+            this.preview.innerHTML = marked.parse(text);
+          } else {
+            this.preview.innerHTML = `<pre class="whitespace-pre-wrap">${this.escapeHtml(text)}</pre>`;
+          }
+        }
+      }
+      
+      async convertToPDF() {
+        const text = this.textInput.value.trim();
+        if (!text) {
+          this.showStatus('Please enter some content first.', true);
+          return;
+        }
+        
+        this.showStatus('Generating PDF...');
+        this.convertBtn.disabled = true;
+        
+        try {
+          // Create a temporary container for PDF generation
+          const container = document.createElement('div');
+          container.style.width = '210mm';
+          container.style.padding = '20mm';
+          container.style.boxSizing = 'border-box';
+          container.style.fontFamily = 'Inter, -apple-system, sans-serif';
+          container.style.color = 'black';
+          container.style.lineHeight = '1.6';
+          container.style.background = 'white';
+          
+          if (this.currentFileType === 'txt') {
+            container.innerHTML = `<pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${this.escapeHtml(text)}</pre>`;
+          } else if (this.currentFileType === 'html') {
+            container.innerHTML = text;
+          } else {
+            if (window.marked) {
+              container.innerHTML = marked.parse(text);
+            } else {
+              container.innerHTML = `<pre style="white-space: pre-wrap;">${this.escapeHtml(text)}</pre>`;
+            }
+          }
+          
+          document.body.appendChild(container);
+          
+          // Generate PDF
+          const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+          
+          const imgWidth = 210;
+          const pageHeight = 297;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          let heightLeft = imgHeight;
+          let position = 0;
+          
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+          
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+          
+          pdf.save('polarsite-document.pdf');
+          
+          this.showStatus('PDF generated successfully!');
+          
+        } catch (error) {
+          console.error('PDF generation error:', error);
+          this.showStatus('Failed to generate PDF. Please try again.', true);
+        } finally {
+          // Clean up
+          if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+          }
+          this.convertBtn.disabled = false;
+        }
+      }
+      
+      clear() {
+        this.textInput.value = '';
+        this.fileInput.value = '';
+        this.currentFileType = 'md';
+        this.updatePreview();
+        this.showStatus('');
+      }
+      
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize PDF Converter
+    const pdfConverter = new PDFConverter();
+  </script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Rename - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Batch rename files locally in your browser. No server required.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="🏷️ Batch Rename" data-zh="🏷️ 批量重命名">🏷️ Batch Rename</h1>
+      <p class="text-lg text-secondary" data-en="Rename hundreds of files locally in your browser. Secure and fast." data-zh="在浏览器中本地重命名数百个文件，安全且快速。">
+        Rename hundreds of files locally in your browser. Secure and fast.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Controls Section -->
+      <div class="space-y-6">
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="Upload & Controls" data-zh="上传与控制">Upload & Controls</h2>
+          
+          <!-- File Upload -->
+          <input type="file" id="file-input" class="hidden" multiple>
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer mb-6">
+            <p class="text-lg font-medium" data-en="Click to Upload Files" data-zh="点击上传文件">Click to Upload Files</p>
+            <p class="text-sm text-secondary mt-2" data-en="Your files are processed locally." data-zh="您的文件将在本地处理。">
+              Your files are processed locally.
+            </p>
+          </div>
+
+          <!-- Rename Controls -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Find" data-zh="查找">Find</label>
+              <input type="text" id="find-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="Text to find" data-en-placeholder="Text to find" data-zh-placeholder="要查找的文本">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Replace" data-zh="替换">Replace</label>
+              <input type="text" id="replace-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="Text to replace with" data-en-placeholder="Text to replace with" data-zh-placeholder="替换为...">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Add Prefix" data-zh="添加前缀">Add Prefix</label>
+              <input type="text" id="prefix-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="e.g., 'vacation_'" data-en-placeholder="e.g., 'vacation_'" data-zh-placeholder="例如：'假期_'">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Add Suffix" data-zh="添加后缀">Add Suffix</label>
+              <input type="text" id="suffix-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" placeholder="e.g., '_final'" data-en-placeholder="e.g., '_final'" data-zh-placeholder="例如：'_最终版'">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2" data-en="Add Sequence (e.g., #)" data-zh="添加序列 (例如：#)">Add Sequence (e.g., #)</label>
+              <p class="text-sm text-secondary mb-2" data-en="Use #, ##, ### for padding. Example: 'image_###.jpg'" data-zh="使用 #, ##, ### 来补零。例如：'照片_###.jpg'">
+                Use #, ##, ### for padding. Example: 'image_###.jpg'
+              </p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-4 mt-6">
+            <button id="download-btn" class="flex-1 btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Download as ZIP" data-zh="下载为 ZIP">
+              Download as ZIP
+            </button>
+            <button id="clear-btn" class="flex-1 btn-secondary rounded-lg px-4 py-3 text-sm font-medium" data-en="Clear All" data-zh="全部清空">
+              Clear All
+            </button>
+          </div>
+          
+          <!-- Status -->
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold mb-4" data-en="File Preview" data-zh="文件预览">File Preview</h2>
+        <div class="border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-[var(--bg-light)] dark:bg-[var(--card-dark)] border-b border-[var(--border-light)] dark:border-[var(--border-dark)]">
+              <tr>
+                <th class="p-3 text-sm font-semibold text-left" data-en="Original Name" data-zh="原始名称">Original Name</th>
+                <th class="p-3 text-sm font-semibold text-left" data-en="New Name" data-zh="新名称">New Name</th>
+              </tr>
+            </thead>
+            <tbody id="preview-tbody">
+              <tr>
+                <td colspan="2" class="p-4 text-center text-secondary" data-en="Upload files to see a preview..." data-zh="上传文件以查看预览...">
+                  Upload files to see a preview...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Batch Rename Logic
+    class BatchRenamer {
+      constructor() {
+        this.fileInput = document.getElementById('file-input');
+        this.dropZone = document.getElementById('drop-zone');
+        this.findInput = document.getElementById('find-input');
+        this.replaceInput = document.getElementById('replace-input');
+        this.prefixInput = document.getElementById('prefix-input');
+        this.suffixInput = document.getElementById('suffix-input');
+        this.downloadBtn = document.getElementById('download-btn');
+        this.clearBtn = document.getElementById('clear-btn');
+        this.previewTbody = document.getElementById('preview-tbody');
+        this.status = document.getElementById('status');
+        
+        this.uploadedFiles = [];
+        this.renamedFiles = [];
+        
+        this.initializeEventListeners();
+        this.updatePreview();
+      }
+      
+      initializeEventListeners() {
+        // File input
+        this.fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+        
+        // Drop zone
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.add('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('dragleave', () => {
+          this.dropZone.classList.remove('border-[var(--accent)]');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropZone.classList.remove('border-[var(--accent)]');
+          this.handleFiles(e.dataTransfer.files);
+        });
+        
+        // Input changes
+        [this.findInput, this.replaceInput, this.prefixInput, this.suffixInput].forEach(input => {
+          input.addEventListener('input', () => this.applyRenaming());
+        });
+        
+        // Buttons
+        this.downloadBtn.addEventListener('click', () => this.downloadZip());
+        this.clearBtn.addEventListener('click', () => this.clearAll());
+      }
+      
+      handleFiles(files) {
+        if (!files || files.length === 0) return;
+        
+        this.uploadedFiles = Array.from(files);
+        this.applyRenaming();
+        this.showStatus(`Loaded ${this.uploadedFiles.length} files.`);
+      }
+      
+      applyRenaming() {
+        if (this.uploadedFiles.length === 0) {
+          this.updatePreview();
+          return;
+        }
+        
+        const find = this.findInput.value;
+        const replace = this.replaceInput.value;
+        const prefix = this.prefixInput.value;
+        const suffix = this.suffixInput.value;
+        
+        this.renamedFiles = this.uploadedFiles.map((file, index) => {
+          const parts = file.name.split('.');
+          const ext = parts.length > 1 ? '.' + parts.pop() : '';
+          let baseName = parts.join('.');
+          
+          let newName = baseName;
+          
+          // 1. Find and Replace
+          if (find) {
+            newName = newName.split(find).join(replace);
+          }
+          
+          // 2. Add Sequence
+          const sequenceMatch = newName.match(/#+/);
+          if (sequenceMatch) {
+            const padding = sequenceMatch[0].length;
+            const seqNum = String(index + 1).padStart(padding, '0');
+            newName = newName.replace(sequenceMatch[0], seqNum);
+          }
+          
+          // 3. Add Prefix and Suffix
+          newName = prefix + newName + suffix + ext;
+          
+          return {
+            originalName: file.name,
+            newName: newName,
+            file: file
+          };
+        });
+        
+        this.updatePreview();
+      }
+      
+      updatePreview() {
+        this.previewTbody.innerHTML = '';
+        
+        if (this.renamedFiles.length === 0) {
+          this.previewTbody.innerHTML = `
+            <tr>
+              <td colspan="2" class="p-4 text-center text-secondary">
+                Upload files to see a preview...
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        this.renamedFiles.forEach(file => {
+          const row = this.previewTbody.insertRow();
+          row.innerHTML = `
+            <td class="p-3 text-sm text-secondary font-mono">${file.originalName}</td>
+            <td class="p-3 text-sm font-mono">${file.newName}</td>
+          `;
+        });
+      }
+      
+      async downloadZip() {
+        if (this.renamedFiles.length === 0) {
+          this.showStatus('Please upload files first.', true);
+          return;
+        }
+        
+        if (!window.JSZip) {
+          this.showStatus('JSZip library not loaded.', true);
+          return;
+        }
+        
+        this.showStatus('Creating ZIP archive...');
+        this.downloadBtn.disabled = true;
+        
+        try {
+          const zip = new JSZip();
+          
+          // Add all files to ZIP
+          for (const item of this.renamedFiles) {
+            const fileData = await item.file.arrayBuffer();
+            zip.file(item.newName, fileData);
+          }
+          
+          // Generate ZIP
+          const content = await zip.generateAsync({ type: 'blob' });
+          
+          // Download
+          const url = URL.createObjectURL(content);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'polarsite-renamed-files.zip';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          this.showStatus('ZIP downloaded successfully!');
+          
+        } catch (error) {
+          console.error('ZIP creation error:', error);
+          this.showStatus('Failed to create ZIP. Please try again.', true);
+        } finally {
+          this.downloadBtn.disabled = false;
+        }
+      }
+      
+      clearAll() {
+        this.uploadedFiles = [];
+        this.renamedFiles = [];
+        this.fileInput.value = '';
+        this.findInput.value = '';
+        this.replaceInput.value = '';
+        this.prefixInput.value = '';
+        this.suffixInput.value = '';
+        this.updatePreview();
+        this.showStatus('All cleared.');
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh-placeholder')) {
+          el.setAttribute('placeholder', el.getAttribute('data-zh-placeholder'));
+        } else {
+          el.setAttribute('placeholder', el.getAttribute('data-en-placeholder'));
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize Batch Renamer
+    const batchRenamer = new BatchRenamer();
+  </script>
+</body>
+</html>

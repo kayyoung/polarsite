@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-Signature - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Sign PDFs with handwritten signatures or digital stamps.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+    .tab-btn { background-color: transparent; border: 1px solid var(--border-light); color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) {
+      .tab-btn { border-color: var(--border-dark); }
+    }
+    .tab-btn.active { background-color: var(--accent); color: white; border-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    #signature-pad {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+    @media (prefers-color-scheme: dark) {
+      #signature-pad {
+        border-color: var(--border-dark);
+      }
+    }
+    #preview-box {
+      position: relative;
+      background-color: #f5f5f5;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+      #preview-box {
+        background-color: #2a2a2a;
+      }
+    }
+    #sig-preview-icon {
+      transition: all 0.2s ease;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="✍️ E-Signature" data-zh="✍️ 电子签名">✍️ E-Signature</h1>
+      <p class="text-lg text-secondary" data-en="Draw, type, or upload your signature and apply it to any PDF." data-zh="绘制、输入或上传您的签名，并将其应用到 PDF 文档中。">
+        Draw, type, or upload your signature and apply it to any PDF.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Left Column -->
+      <div class="space-y-6">
+        <!-- Signature Creation -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="1. Create Signature" data-zh="1. 创建签名">1. Create Signature</h2>
+          
+          <!-- Tabs -->
+          <div class="flex gap-2 mb-4">
+            <button id="tab-draw" class="tab-btn active rounded-lg px-4 py-2 text-sm font-medium" data-en="Draw" data-zh="手绘">Draw</button>
+            <button id="tab-type" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Type" data-zh="输入">Type</button>
+            <button id="tab-upload" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Upload" data-zh="上传">Upload</button>
+          </div>
+
+          <!-- Draw Tab -->
+          <div id="content-draw" class="tab-content active">
+            <canvas id="signature-pad" class="w-full h-48 bg-white dark:bg-gray-800"></canvas>
+            <button id="clear-sig" class="mt-2 btn-secondary rounded-lg px-4 py-2 text-sm font-medium" data-en="Clear Signature" data-zh="清除签名">Clear Signature</button>
+          </div>
+
+          <!-- Type Tab -->
+          <div id="content-type" class="tab-content">
+            <input type="text" id="text-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mb-2" placeholder="Type your name..." data-en-placeholder="Type your name..." data-zh-placeholder="在此输入姓名...">
+            <button id="generate-text" class="btn-primary rounded-lg px-4 py-2 text-sm font-medium" data-en="Generate" data-zh="生成">Generate</button>
+            <canvas id="text-preview" class="w-full h-32 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mt-2 bg-white dark:bg-gray-800"></canvas>
+          </div>
+
+          <!-- Upload Tab -->
+          <div id="content-upload" class="tab-content">
+            <input type="file" id="image-input" class="hidden" accept="image/*">
+            <div class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer" onclick="document.getElementById('image-input').click()">
+              <p class="text-secondary" data-en="Upload signature image..." data-zh="上传签名图片...">Upload signature image...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placement Options -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="2. Preview & Placement" data-zh="2. 预览与放置">2. Preview & Placement</h2>
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-1" data-en="Page Number:" data-zh="页码:">Page Number:</label>
+              <input type="number" id="page-num" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="1" min="1">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" data-en="X Coordinate:" data-zh="X 坐标:">X Coordinate:</label>
+              <input type="number" id="x-coord" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="50">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" data-en="Y Coordinate:" data-zh="Y 坐标:">Y Coordinate:</label>
+              <input type="number" id="y-coord" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="50">
+            </div>
+          </div>
+          
+          <div id="preview-box" class="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg aspect-[1/1.414] border border-[var(--border-light)] dark:border-[var(--border-dark)]">
+            <div id="preview-placeholder" class="absolute inset-0 flex items-center justify-center text-secondary" data-en="Upload a PDF to see a preview of the selected page." data-zh="上传 PDF 后可预览页面。">
+              Upload a PDF to see a preview of the selected page.
+            </div>
+            <div id="sig-preview-icon" class="absolute w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs" style="display: none; transform: translate(-50%, 50%);">✍️</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-6">
+        <!-- PDF Upload -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="3. Upload PDF & Sign" data-zh="3. 上传 PDF 并签名">3. Upload PDF & Sign</h2>
+          
+          <input type="file" id="pdf-input" class="hidden" accept=".pdf">
+          <div id="pdf-drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer">
+            <p class="text-secondary" data-en="Drag & drop .pdf file here, or click." data-zh="拖拽 .pdf 文件到此处，或点击。">
+              Drag & drop .pdf file here, or click.
+            </p>
+          </div>
+          
+          <div class="mt-6 flex gap-4">
+            <button id="download-btn" class="flex-1 btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Download Signed PDF" data-zh="下载已签名的 PDF">
+              Download Signed PDF
+            </button>
+          </div>
+          
+          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // E-Signature Logic
+    class ESignature {
+      constructor() {
+        // Elements
+        this.canvas = document.getElementById('signature-pad');
+        this.textCanvas = document.getElementById('text-preview');
+        this.textCtx = this.textCanvas.getContext('2d');
+        this.tabs = {
+          draw: document.getElementById('tab-draw'),
+          type: document.getElementById('tab-type'),
+          upload: document.getElementById('tab-upload')
+        };
+        this.contents = {
+          draw: document.getElementById('content-draw'),
+          type: document.getElementById('content-type'),
+          upload: document.getElementById('content-upload')
+        };
+        
+        this.textInput = document.getElementById('text-input');
+        this.imageInput = document.getElementById('image-input');
+        this.pdfInput = document.getElementById('pdf-input');
+        this.clearSigBtn = document.getElementById('clear-sig');
+        this.generateTextBtn = document.getElementById('generate-text');
+        this.pageNumInput = document.getElementById('page-num');
+        this.xCoordInput = document.getElementById('x-coord');
+        this.yCoordInput = document.getElementById('y-coord');
+        this.downloadBtn = document.getElementById('download-btn');
+        this.status = document.getElementById('status');
+        
+        // State
+        this.signaturePad = null;
+        this.currentTab = 'draw';
+        this.pdfBytes = null;
+        this.pdfFile = null;
+        this.uploadedSignature = null;
+        this.sigImageBytes = null;
+        this.sigImageType = 'png';
+        
+        this.initialize();
+      }
+      
+      initialize() {
+        this.initializeTabs();
+        this.initializeSignaturePad();
+        this.initializeEventListeners();
+        this.updatePreviewIcon();
+      }
+      
+      initializeTabs() {
+        Object.keys(this.tabs).forEach(tabKey => {
+          this.tabs[tabKey].addEventListener('click', () => this.switchTab(tabKey));
+        });
+        this.switchTab('draw');
+      }
+      
+      switchTab(tabKey) {
+        // Update tab buttons
+        Object.keys(this.tabs).forEach(key => {
+          this.tabs[key].classList.remove('active');
+          this.contents[key].classList.remove('active');
+        });
+        
+        this.tabs[tabKey].classList.add('active');
+        this.contents[tabKey].classList.add('active');
+        this.currentTab = tabKey;
+      }
+      
+      initializeSignaturePad() {
+        this.signaturePad = new SignaturePad(this.canvas, {
+          backgroundColor: 'rgba(0,0,0,0)',
+          penColor: 'rgb(0, 0, 0)'
+        });
+        
+        // Resize canvas
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+      }
+      
+      resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        this.canvas.width = this.canvas.offsetWidth * ratio;
+        this.canvas.height = this.canvas.offsetHeight * ratio;
+        this.canvas.getContext('2d').scale(ratio, ratio);
+        this.signaturePad.clear();
+      }
+      
+      initializeEventListeners() {
+        // Clear signature
+        this.clearSigBtn.addEventListener('click', () => this.signaturePad.clear());
+        
+        // Generate text signature
+        this.generateTextBtn.addEventListener('click', () => this.generateTextSignature());
+        
+        // Image upload
+        this.imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
+        
+        // PDF upload
+        this.pdfInput.addEventListener('change', (e) => this.handlePDFUpload(e.target.files[0]));
+        document.getElementById('pdf-drop-zone').addEventListener('click', () => this.pdfInput.click());
+        
+        // Coordinate inputs
+        [this.pageNumInput, this.xCoordInput, this.yCoordInput].forEach(input => {
+          input.addEventListener('input', () => this.updatePreviewIcon());
+        });
+        
+        // Download button
+        this.downloadBtn.addEventListener('click', () => this.signPDF());
+      }
+      
+      generateTextSignature() {
+        const text = this.textInput.value.trim();
+        if (!text) return;
+        
+        // Resize canvas
+        this.textCanvas.width = this.textCanvas.offsetWidth;
+        this.textCanvas.height = this.textCanvas.offsetHeight;
+        
+        // Clear canvas
+        this.textCtx.clearRect(0, 0, this.textCanvas.width, this.textCanvas.height);
+        
+        // Draw text
+        this.textCtx.fillStyle = 'black';
+        this.textCtx.font = '30px "Comic Sans MS", cursive';
+        this.textCtx.textAlign = 'left';
+        this.textCtx.textBaseline = 'middle';
+        this.textCtx.fillText(text, 10, this.textCanvas.height / 2);
+        
+        // Convert to blob for signing
+        this.textCanvas.toBlob((blob) => {
+          this.uploadedSignature = blob;
+          this.sigImageType = 'png';
+        }, 'image/png');
+      }
+      
+      handleImageUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          this.uploadedSignature = file;
+          this.sigImageType = file.type.includes('jpeg') ? 'jpg' : 'png';
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      
+      async handlePDFUpload(file) {
+        if (!file || !file.type.includes('pdf')) {
+          this.showStatus('Please upload a PDF file.', true);
+          return;
+        }
+        
+        this.pdfFile = file;
+        this.showStatus('Loading PDF...');
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          this.pdfBytes = e.target.result;
+          try {
+            const pdfDoc = await PDFLib.PDFDocument.load(this.pdfBytes);
+            this.updatePreview(pdfDoc);
+            this.showStatus('PDF loaded. Ready to sign.');
+          } catch (error) {
+            console.error('PDF load error:', error);
+            this.showStatus('Failed to load PDF.', true);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      
+      updatePreview(pdfDoc) {
+        if (!pdfDoc) return;
+        
+        const pages = pdfDoc.getPages();
+        const pageNum = Math.min(Math.max(1, parseInt(this.pageNumInput.value) || 1), pages.length);
+        const page = pages[pageNum - 1];
+        const { width, height } = page.getSize();
+        
+        // Update preview box aspect ratio
+        const previewBox = document.getElementById('preview-box');
+        previewBox.style.aspectRatio = `${width}/${height}`;
+        
+        // Hide placeholder
+        this.placeholder.style.display = 'none';
+        
+        // Update preview icon position
+        this.updatePreviewIcon();
+      }
+      
+      updatePreviewIcon() {
+        const previewIcon = document.getElementById('sig-preview-icon');
+        const x = parseInt(this.xCoordInput.value) || 50;
+        const y = parseInt(this.yCoordInput.value) || 50;
+        
+        previewIcon.style.left = x + 'px';
+        previewIcon.style.bottom = y + 'px';
+        previewIcon.style.display = 'flex';
+      }
+      
+      async signPDF() {
+        // Check if signature exists
+        let signatureData = null;
+        
+        if (this.currentTab === 'draw') {
+          if (this.signaturePad.isEmpty()) {
+            this.showStatus('Please create a signature first.', true);
+            return;
+          }
+          signatureData = this.signaturePad.toDataURL('image/png');
+        } else if (this.currentTab === 'type') {
+          if (!this.textInput.value.trim()) {
+            this.showStatus('Please enter text for signature.', true);
+            return;
+          }
+          this.generateTextSignature();
+          if (!this.uploadedSignature) {
+            this.showStatus('Please generate text signature first.', true);
+            return;
+          }
+        } else if (this.currentTab === 'upload') {
+          if (!this.uploadedSignature) {
+            this.showStatus('Please upload a signature image.', true);
+            return;
+          }
+        }
+        
+        if (!this.pdfBytes) {
+          this.showStatus('Please upload a PDF file first.', true);
+          return;
+        }
+        
+        this.showStatus('Signing PDF...');
+        this.downloadBtn.disabled = true;
+        
+        try {
+          const pdfDoc = await PDFLib.PDFDocument.load(this.pdfBytes);
+          
+          // Get signature image
+          let sigImage;
+          if (this.currentTab === 'upload') {
+            const sigBytes = await this.uploadedSignature.arrayBuffer();
+            if (this.sigImageType === 'jpg') {
+              sigImage = await pdfDoc.embedJpg(sigBytes);
+            } else {
+              sigImage = await pdfDoc.embedPng(sigBytes);
+            }
+          } else {
+            // For draw and type tabs, convert data URL to bytes
+            const response = await fetch(signatureData || this.textCanvas.toDataURL());
+            const sigBytes = await response.arrayBuffer();
+            sigImage = await pdfDoc.embedPng(sigBytes);
+          }
+          
+          // Get placement coordinates
+          const pageNum = Math.max(1, parseInt(this.pageNumInput.value) || 1);
+          const x = parseInt(this.xCoordInput.value) || 50;
+          const y = parseInt(this.yCoordInput.value) || 50;
+          
+          const pages = pdfDoc.getPages();
+          if (pageNum > pages.length) {
+            this.showStatus('Page number exceeds total pages.', true);
+            return;
+          }
+          
+          const page = pages[pageNum - 1];
+          
+          // Scale and place signature
+          const sigDims = sigImage.scale(0.2);
+          page.drawImage(sigImage, {
+            x: x,
+            y: page.getHeight() - y - sigDims.height, // PDF coordinates from bottom
+            width: sigDims.width,
+            height: sigDims.height,
+          });
+          
+          // Generate signed PDF
+          const pdfBytes = await pdfDoc.save();
+          
+          // Download
+          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'signed_' + this.pdfFile.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          this.showStatus('PDF signed successfully!');
+          
+        } catch (error) {
+          console.error('Signing error:', error);
+          this.showStatus('Failed to sign PDF. Please try again.', true);
+        } finally {
+          this.downloadBtn.disabled = false;
+        }
+      }
+      
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
+        
+        if (!isError && message) {
+          setTimeout(() => {
+            if (this.status.textContent === message) {
+              this.status.textContent = '';
+            }
+          }, 3000);
+        }
+      }
+    }
+    
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          el.textContent = el.getAttribute('data-zh');
+        } else {
+          el.textContent = el.getAttribute('data-en');
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh-placeholder')) {
+          el.setAttribute('placeholder', el.getAttribute('data-zh-placeholder'));
+        } else {
+          el.setAttribute('placeholder', el.getAttribute('data-en-placeholder'));
+        }
+      });
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+    
+    // Initialize E-Signature
+    const eSignature = new ESignature();
+  </script>
+</body>
+</html>

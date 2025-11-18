@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="About Polarsite Toolkit - Secure client-side tools for professionals.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-4xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="About Us" data-zh="关于我们">About Us</h1>
+      <p class="text-lg text-secondary" data-en="Polarsite Toolkit is an open-source, secure, and private collection of browser-based tools, independently maintained by individual developers." data-zh="极地工具集是一个开源、安全、私密的浏览器端工具合集，由个人开发者独立维护。">
+        Polarsite Toolkit is an open-source, secure, and private collection of browser-based tools, independently maintained by individual developers.
+      </p>
+    </div>
+
+    <div class="card p-8 mb-8">
+      <h2 class="text-2xl font-semibold mb-4" data-en="Our Philosophy" data-zh="我们的理念">Our Philosophy</h2>
+      <p class="text-secondary mb-4" data-en="In an era of frequent data breaches, we believe: <strong>Your files should belong only to you.</strong>" data-zh="在数据泄露频发的时代，我们相信：<strong>您的文件，应只属于您自己。</strong>">
+        In an era of frequent data breaches, we believe: <strong>Your files should belong only to you.</strong>
+      </p>
+      <p class="text-secondary" data-en="Therefore, we adhere to the &quot;zero server dependency&quot; principle—all operations, including file conversion, renaming, data cleaning, and signing, are completed directly in your browser. Your data never leaves your device." data-zh="因此，我们坚持“零服务器依赖”原则——所有操作，包括文件转换、批量重命名、数据清洗和电子签名，均直接在您的浏览器中完成。您的数据永不离开您的设备。">
+        Therefore, we adhere to the "zero server dependency" principle—all operations, including file conversion, renaming, data cleaning, and signing, are completed directly in your browser. Your data never leaves your device.
+      </p>
+    </div>
+
+    <div class="card p-8 mb-8">
+      <h2 class="text-2xl font-semibold mb-4" data-en="Current Features" data-zh="现有功能">Current Features</h2>
+      <ul class="space-y-2 text-secondary">
+        <li data-en="✅ PDF Tools: Convert Markdown/TXT/HTML to PDF, Apply E-Signatures." data-zh="✅ PDF 工具：将 Markdown/TXT/HTML 转换为 PDF，应用电子签名">✅ PDF Tools: Convert Markdown/TXT/HTML to PDF, Apply E-Signatures.</li>
+        <li data-en="✅ File Management: Batch Renaming, Image Watermark Removal." data-zh="✅ 文件管理：批量重命名文件，移除图片水印">✅ File Management: Batch Renaming, Image Watermark Removal.</li>
+        <li data-en="✅ Data Processing: Local CSV/Excel Data Viewer and Processor." data-zh="✅ 数据处理：本地 CSV/Excel 数据查看和处理">✅ Data Processing: Local CSV/Excel Data Viewer and Processor.</li>
+        <li data-en="✅ Pure front-end implementation, no backend service." data-zh="✅ 纯前端实现，无后端服务">✅ Pure front-end implementation, no backend service.</li>
+        <li data-en="✅ Auto multi-language, dark/light theme adaptive." data-zh="✅ 自动多语言，深色/浅色主题自适应">✅ Auto multi-language, dark/light theme adaptive.</li>
+        <li data-en="✅ Open source and auditable (<a href='https://github.com/kayyoung/pdf-converter' target='_blank' class='text-blue-600 dark:text-blue-400'>GitHub</a>)." data-zh="✅ 开源可审计 (<a href='https://github.com/kayyoung/pdf-converter' target='_blank' class='text-blue-600 dark:text-blue-400'>GitHub</a>)">✅ Open source and auditable (<a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-blue-600 dark:text-blue-400">GitHub</a>)</li>
+      </ul>
+    </div>
+
+    <div class="card p-8">
+      <h2 class="text-2xl font-semibold mb-4" data-en="Contact Us" data-zh="联系我们">Contact Us</h2>
+      <p class="text-secondary mb-4" data-en="Feel free to communicate via:" data-zh="欢迎通过以下方式交流：">
+        Feel free to communicate via:
+      </p>
+      <ul class="space-y-2 text-secondary">
+        <li data-en="📧 Email: admin@polarsite.site" data-zh="📧 邮箱：admin@polarsite.site">📧 Email: admin@polarsite.site</li>
+        <li data-en="💻 Source Code: <a href='https://github.com/kayyoung/pdf-converter' target='_blank' class='text-blue-600 dark:text-blue-400'>github.com/kayyoung/pdf-converter</a>" data-zh="💻 源码：<a href='https://github.com/kayyoung/pdf-converter' target='_blank' class='text-blue-600 dark:text-blue-400'>github.com/kayyoung/pdf-converter</a>">💻 Source Code: <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-blue-600 dark:text-blue-400">github.com/kayyoung/pdf-converter</a></li>
+      </ul>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          // Use innerHTML for elements containing links or formatting
+          if (el.innerHTML.includes('<') || el.hasAttribute('data-html')) {
+              el.innerHTML = el.getAttribute('data-zh');
+          } else {
+              el.textContent = el.getAttribute('data-zh');
+          }
+        } else {
+           if (el.innerHTML.includes('<') || el.hasAttribute('data-html')) {
+              el.innerHTML = el.getAttribute('data-en');
+          } else {
+              el.textContent = el.getAttribute('data-en');
+          }
+        }
+      });
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+  </script>
+</body>
+</html>

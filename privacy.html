@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy - Polarsite Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Privacy Policy for Polarsite Toolkit - Your data never leaves your device.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
+      --card-dark: #1c1c1e; --text-light: #1d1d1f; --text-dark: #f5f5f7;
+      --text-sec-light: #6e6e73; --text-sec-dark: #a1a1a6; --border-light: #d2d2d7;
+      --border-dark: #3a3a3c;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-light); color: var(--text-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: var(--bg-dark); color: var(--text-dark); }
+      .card { background-color: var(--card-dark); border-color: var(--border-dark); }
+    }
+    .card {
+      background-color: var(--card-light); border: 1px solid var(--border-light);
+      border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .card {
+        background-color: var(--card-dark); border-color: var(--border-dark);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+    }
+    .text-secondary { color: var(--text-sec-light); }
+    @media (prefers-color-scheme: dark) { .text-secondary { color: var(--text-sec-dark); } }
+    .btn-primary { background-color: var(--accent); color: white; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background-color: var(--bg-light); transition: opacity 0.2s; }
+    .btn-secondary:hover { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      .btn-secondary { background-color: var(--card-dark); }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--border-light)] bg-white/80 backdrop-blur-sm dark:border-[var(--border-dark)] dark:bg-[var(--bg-dark)]/80">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0071e3"></rect>
+          <text x="50" y="55" font-size="50" font-weight="600" fill="#ffffff" text-anchor="middle" alignment-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif">P</text>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight" style="color: var(--text-light); dark:color: var(--text-dark);">Polarsite</span>
+      </a>
+      <div class="hidden items-center gap-6 text-[15px] font-medium md:flex">
+        <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
+        <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
+        <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+      </div>
+      <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
+        中文
+      </button>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-4xl p-4 py-10 lg:px-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="Privacy Policy" data-zh="隐私政策">Privacy Policy</h1>
+      <p class="text-lg text-secondary" data-en="Effective Date: November 18, 2025" data-zh="生效日期：2025年11月18日">Effective Date: November 18, 2025</p>
+    </div>
+
+    <div class="card p-8 space-y-6">
+      <p class="text-secondary" data-en="Welcome to the <strong>Polarsite Toolkit</strong> (hereinafter &quot;this tool&quot;). We understand the importance of privacy to you, and this notice explains how this tool handles your data." data-zh="欢迎使用<strong>极地工具集</strong>（以下简称“本工具”）。我们深知隐私对您的重要性，因此特此说明本工具如何处理您的数据。">
+        Welcome to the <strong>Polarsite Toolkit</strong> (hereinafter "this tool"). We understand the importance of privacy to you, and this notice explains how this tool handles your data.
+      </p>
+      
+      <div>
+        <h2 class="text-xl font-semibold mb-2" data-en="1. This Tool is a Pure Front-End Application" data-zh="1. 本工具为纯前端应用">1. This Tool is a Pure Front-End Application</h2>
+        <p class="text-secondary" data-en="Polarsite Toolkit runs entirely in your browser. All file processing (including Markdown/TXT/HTML conversion, PDF signing, batch renaming, and image processing) is done locally. <strong>No files or content will be uploaded to any server.</strong>" data-zh="极地工具集完全在您的浏览器中运行。所有文件处理（包括 Markdown/TXT/HTML 转换、PDF 签名、批量重命名和图片处理）均在本地完成，<strong>不会上传任何文件或内容到服务器</strong>。">
+          Polarsite Toolkit runs entirely in your browser. All file processing (including Markdown/TXT/HTML conversion, PDF signing, batch renaming, and image processing) is done locally. <strong>No files or content will be uploaded to any server.</strong>
+        </p>
+      </div>
+      
+      <div>
+        <h2 class="text-xl font-semibold mb-2" data-en="2. We Do Not Collect Any User Data" data-zh="2. 我们不收集任何用户数据">2. We Do Not Collect Any User Data</h2>
+        <p class="text-secondary" data-en="This tool <strong>does not use cookies</strong>, <strong>does not record access logs</strong>, and <strong>does not embed third-party tracking code</strong>. Your privacy is 100% respected." data-zh="本工具<strong>不使用 Cookie</strong>，<strong>不记录访问日志</strong>，<strong>不嵌入第三方追踪代码</strong>。您的隐私 100% 受到尊重。">
+          This tool <strong>does not use cookies</strong>, <strong>does not record access logs</strong>, and <strong>does not embed third-party tracking code</strong>. Your privacy is 100% respected.
+        </p>
+      </div>
+      
+      <div>
+        <h2 class="text-xl font-semibold mb-2" data-en="3. File Processing Explanation" data-zh="3. 文件处理说明">3. File Processing Explanation</h2>
+        <p class="text-secondary" data-en="When you upload a file or input text, the content only exists in your browser's memory. After closing the page, the data is immediately cleared and <strong>will not be stored, cached, or transmitted</strong>." data-zh="当您上传文件或输入文本时，内容仅存在于您的浏览器内存中。关闭页面后，数据立即清除，<strong>不会被存储、缓存或传输</strong>。">
+          When you upload a file or input text, the content only exists in your browser's memory. After closing the page, the data is immediately cleared and <strong>will not be stored, cached, or transmitted</strong>.
+        </p>
+      </div>
+      
+      <div>
+        <h2 class="text-xl font-semibold mb-2" data-en="4. Third-Party Services" data-zh="4. 第三方服务">4. Third-Party Services</h2>
+        <p class="text-secondary mb-2" data-en="This tool relies on the following CDN resources (only for loading necessary JavaScript libraries for features like PDF manipulation, data parsing, and signature drawing):" data-zh="本工具依赖以下 CDN 资源（仅加载必要的 JavaScript 库，用于 PDF 操作、数据解析和签名绘制等功能）：">
+          This tool relies on the following CDN resources (only for loading necessary JavaScript libraries for features like PDF manipulation, data parsing, and signature drawing):
+        </p>
+        <ul class="text-secondary list-disc list-inside space-y-1 ml-4">
+          <li data-en="jsPDF / html2canvas / marked (via cdnjs.cloudflare.com, cdn.jsdelivr.net)" data-zh="jsPDF / html2canvas / marked (via cdnjs.cloudflare.com, cdn.jsdelivr.net)">jsPDF / html2canvas / marked (via cdnjs.cloudflare.com, cdn.jsdelivr.net)</li>
+          <li data-en="pdf-lib / signature_pad (via unpkg.com, cdn.jsdelivr.net)" data-zh="pdf-lib / signature_pad (via unpkg.com, cdn.jsdelivr.net)">pdf-lib / signature_pad (via unpkg.com, cdn.jsdelivr.net)</li>
+          <li data-en="JSZip / PapaParse / XLSX (via cdnjs.cloudflare.com)" data-zh="JSZip / PapaParse / XLSX (via cdnjs.cloudflare.com)">JSZip / PapaParse / XLSX (via cdnjs.cloudflare.com)</li>
+        </ul>
+        <p class="text-secondary mt-2" data-en="These services have their own independent privacy policies, but we only use them for functional implementation, not for data collection." data-zh="这些服务拥有独立的隐私政策，我们仅将其用于功能实现，不用于数据收集。">
+          These services have their own independent privacy policies, but we only use them for functional implementation, not for data collection.
+        </p>
+      </div>
+      
+      <div>
+        <h2 class="text-xl font-semibold mb-2" data-en="5. Contact Us" data-zh="5. 联系我们">5. Contact Us</h2>
+        <p class="text-secondary" data-en="If you have any privacy-related questions, please contact us via the domain email: admin@polarsite.site" data-zh="如果您有任何隐私相关问题，请通过域名邮箱联系我们：admin@polarsite.site">
+          If you have any privacy-related questions, please contact us via the domain email: admin@polarsite.site
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-20 border-t border-[var(--border-light)] py-16 dark:border-[var(--border-dark)]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="About Polarsite" data-zh="关于 极地">About Polarsite</h3>
+          <p class="text-secondary" data-en="Secure, client-side tools for professionals. Your data never leaves your device." data-zh="安全、私密的浏览器端专业工具。您的数据永不离开您的设备。">
+            Secure, client-side tools for professionals. Your data never leaves your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Sponsor Us" data-zh="支持我们">Sponsor Us</h3>
+          <p class="text-secondary mb-4" data-en="If you find these tools helpful, consider supporting their development." data-zh="如果您觉得这些工具对您有帮助，请考虑支持我们开发。">
+            If you find these tools helpful, consider supporting their development.
+          </p>
+          <div class="flex gap-4">
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+             <div class="flex h-24 w-24 items-center justify-center rounded-lg bg-[var(--bg-light)] text-secondary dark:bg-[var(--card-dark)]" data-en="QR Placeholder" data-zh="二维码占位">QR Placeholder</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2" data-en="Advertisement" data-zh="广告">Advertisement</h3>
+          <p class="text-secondary" data-en="AdSense slot will be here." data-zh="AdSense 广告位">AdSense slot will be here.</p>
+        </div>
+      </div>
+      <div class="mt-12 border-t border-[var(--border-light)] pt-8 text-center text-secondary dark:border-[var(--border-dark)]">
+        © 2025 Polarsite · <a href="mailto:admin@polarsite.site" class="hover:underline">admin@polarsite.site</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Language Toggle System
+    let currentLang = 'en';
+    const langToggle = document.getElementById('lang-toggle');
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-en]').forEach(el => {
+        if (lang === 'zh' && el.hasAttribute('data-zh')) {
+          if (el.innerHTML.includes('<') || el.hasAttribute('data-html')) {
+              el.innerHTML = el.getAttribute('data-zh');
+          } else {
+              el.textContent = el.getAttribute('data-zh');
+          }
+        } else {
+           if (el.innerHTML.includes('<') || el.hasAttribute('data-html')) {
+              el.innerHTML = el.getAttribute('data-en');
+          } else {
+              el.textContent = el.getAttribute('data-en');
+          }
+        }
+      });
+      
+      // Update page title
+      const title = document.querySelector('h1[data-en]');
+      if (title) {
+        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
+          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
+          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
+      }
+      
+      // Update button text
+      langToggle.textContent = lang === 'en' ? '中文' : 'English';
+    }
+    
+    function toggleLanguage() {
+      setLanguage(currentLang === 'en' ? 'zh' : 'en');
+    }
+    
+    // Initialize
+    langToggle.addEventListener('click', toggleLanguage);
+    
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('polarsite_lang');
+    if (savedLang && ['en', 'zh'].includes(savedLang)) {
+      setLanguage(savedLang);
+    } else {
+      // Auto-detect language based on browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang.startsWith('zh')) {
+        setLanguage('zh');
+      }
+    }
+    
+    // Save language preference
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('polarsite_lang', currentLang);
+    });
+  </script>
+</body>
+</html>
