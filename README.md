@@ -4,12 +4,12 @@
 
 极地文本工具集是一个纯前端的工具集合，所有处理都在浏览器中完成，确保您的数据安全私密。
 
-**访问地址**: https://zsxvggkgktjba.ok.kimi.link
+**访问地址**: https://polarsite.site/
 
 ## 📁 项目结构
 
 ```
-/mnt/okcomputer/output/polarsite-toolkit/
+/var/www/polarsite/
 ├── index.html          # 主页面
 ├── pdf.html            # PDF转换器
 ├── rename.html         # 批量重命名
@@ -101,7 +101,7 @@ python -m http.server 8000
 npx serve .
 
 # 部署到Nginx
-sudo cp -r /mnt/okcomputer/output/polarsite-toolkit /var/www/
+sudo cp -r /var/www/polarsite
 sudo nginx -s reload
 ```
 
@@ -116,7 +116,7 @@ sudo nginx -s reload
 ## 📞 联系方式
 
 - **邮箱**: admin@polarsite.site
-- **GitHub**: https://github.com/kayyoung/pdf-converter
+- **GitHub**: https://github.com/kayyoung/polarsite
 
 ## 📄 许可证
 
