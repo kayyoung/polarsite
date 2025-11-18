@@ -94,7 +94,7 @@
         <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
         <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
         <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
-        <a href="https://github.com/kayyoung/polarsite" target="_blank" class="text-secondary">GitHub</a>
+        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
       </div>
       <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
         中文
@@ -104,40 +104,34 @@
 
   <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
     <div class="text-center mb-12">
-      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="✍️ E-Signature" data-zh="✍️ 电子签名">✍️ E-Signature</h1>
+      <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="✍️ E-Signature" data-zh="✍️ 电子签名">✍️ 电子签名</h1>
       <p class="text-lg text-secondary" data-en="Draw, type, or upload your signature and apply it to any PDF." data-zh="绘制、输入或上传您的签名，并将其应用到 PDF 文档中。">
         Draw, type, or upload your signature and apply it to any PDF.
       </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Left Column -->
       <div class="space-y-6">
-        <!-- Signature Creation -->
         <div class="card p-6">
           <h2 class="text-xl font-semibold mb-4" data-en="1. Create Signature" data-zh="1. 创建签名">1. Create Signature</h2>
           
-          <!-- Tabs -->
           <div class="flex gap-2 mb-4">
             <button id="tab-draw" class="tab-btn active rounded-lg px-4 py-2 text-sm font-medium" data-en="Draw" data-zh="手绘">Draw</button>
             <button id="tab-type" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Type" data-zh="输入">Type</button>
             <button id="tab-upload" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Upload" data-zh="上传">Upload</button>
           </div>
 
-          <!-- Draw Tab -->
           <div id="content-draw" class="tab-content active">
             <canvas id="signature-pad" class="w-full h-48 bg-white dark:bg-gray-800"></canvas>
             <button id="clear-sig" class="mt-2 btn-secondary rounded-lg px-4 py-2 text-sm font-medium" data-en="Clear Signature" data-zh="清除签名">Clear Signature</button>
           </div>
 
-          <!-- Type Tab -->
           <div id="content-type" class="tab-content">
             <input type="text" id="text-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mb-2" placeholder="Type your name..." data-en-placeholder="Type your name..." data-zh-placeholder="在此输入姓名...">
             <button id="generate-text" class="btn-primary rounded-lg px-4 py-2 text-sm font-medium" data-en="Generate" data-zh="生成">Generate</button>
             <canvas id="text-preview" class="w-full h-32 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mt-2 bg-white dark:bg-gray-800"></canvas>
           </div>
 
-          <!-- Upload Tab -->
           <div id="content-upload" class="tab-content">
             <input type="file" id="image-input" class="hidden" accept="image/*">
             <div class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer" onclick="document.getElementById('image-input').click()">
@@ -146,9 +140,8 @@
           </div>
         </div>
 
-        <!-- Placement Options -->
         <div class="card p-6">
-          <h2 class="text-xl font-semibold mb-4" data-en="2. Preview & Placement" data-zh="2. 预览与放置">2. Preview & Placement</h2>
+          <h2 class="text-xl font-semibold mb-4" data-en="2. Preview & Placement" data-zh="2. 预览与放置">2. 预览与放置</h2>
           <div class="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label class="block text-sm font-medium mb-1" data-en="Page Number:" data-zh="页码:">Page Number:</label>
@@ -173,11 +166,9 @@
         </div>
       </div>
 
-      <!-- Right Column -->
       <div class="space-y-6">
-        <!-- PDF Upload -->
         <div class="card p-6">
-          <h2 class="text-xl font-semibold mb-4" data-en="3. Upload PDF & Sign" data-zh="3. 上传 PDF 并签名">3. Upload PDF & Sign</h2>
+          <h2 class="text-xl font-semibold mb-4" data-en="3. Upload PDF & Sign" data-zh="3. 上传 PDF 并签名">3. 上传 PDF 并签名</h2>
           
           <input type="file" id="pdf-input" class="hidden" accept=".pdf">
           <div id="pdf-drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer">
@@ -257,6 +248,7 @@
         this.yCoordInput = document.getElementById('y-coord');
         this.downloadBtn = document.getElementById('download-btn');
         this.status = document.getElementById('status');
+        this.placeholder = document.getElementById('preview-placeholder'); // <--- 修复点：添加对预览占位符的引用
         
         // State
         this.signaturePad = null;
@@ -297,6 +289,9 @@
       }
       
       initializeSignaturePad() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+        
         this.signaturePad = new SignaturePad(this.canvas, {
           backgroundColor: 'rgba(0,0,0,0)',
           penColor: 'rgb(0, 0, 0)'
@@ -393,7 +388,8 @@
             this.showStatus('PDF loaded. Ready to sign.');
           } catch (error) {
             console.error('PDF load error:', error);
-            this.showStatus('Failed to load PDF.', true);
+            // 之前由于 this.placeholder 引起错误，但现在已修复，如果还有错，就是PDF本身的问题
+            this.showStatus('Failed to load PDF.', true); 
           }
         };
         reader.readAsArrayBuffer(file);
@@ -411,7 +407,7 @@
         const previewBox = document.getElementById('preview-box');
         previewBox.style.aspectRatio = `${width}/${height}`;
         
-        // Hide placeholder
+        // Hide placeholder (现在 this.placeholder 有定义，不会报错)
         this.placeholder.style.display = 'none';
         
         // Update preview icon position
@@ -443,9 +439,11 @@
             this.showStatus('Please enter text for signature.', true);
             return;
           }
-          this.generateTextSignature();
-          if (!this.uploadedSignature) {
-            this.showStatus('Please generate text signature first.', true);
+          // For type, ensure the canvas drawing is up to date
+          this.generateTextSignature(); 
+          // Check again after generation
+          if (!this.textInput.value.trim()) { // A simple check to ensure some text was there
+            this.showStatus('Signature generation failed.', true);
             return;
           }
         } else if (this.currentTab === 'upload') {
@@ -477,7 +475,11 @@
             }
           } else {
             // For draw and type tabs, convert data URL to bytes
-            const response = await fetch(signatureData || this.textCanvas.toDataURL());
+            // If draw tab, use signaturePad.toDataURL()
+            // If type tab, use textCanvas.toDataURL()
+            const dataUrl = this.currentTab === 'draw' ? this.signaturePad.toDataURL('image/png') : this.textCanvas.toDataURL('image/png');
+
+            const response = await fetch(dataUrl);
             const sigBytes = await response.arrayBuffer();
             sigImage = await pdfDoc.embedPng(sigBytes);
           }
@@ -496,10 +498,11 @@
           const page = pages[pageNum - 1];
           
           // Scale and place signature
-          const sigDims = sigImage.scale(0.2);
+          // 使用 0.2 的缩放比例
+          const sigDims = sigImage.scale(0.2); 
           page.drawImage(sigImage, {
             x: x,
-            y: page.getHeight() - y - sigDims.height, // PDF coordinates from bottom
+            y: page.getHeight() - y - sigDims.height, // PDF coordinates are from bottom
             width: sigDims.width,
             height: sigDims.height,
           });
