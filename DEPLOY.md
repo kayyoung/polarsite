@@ -14,37 +14,37 @@
 #### 方法A: 使用SCP上传
 ```bash
 # 从本地上传到VPS
-scp -r /mnt/okcomputer/output/polarsite-toolkit user@your-vps-ip:/var/www/
+scp -r /var/www/polarsite user@your-vps-ip:/var/www/
 
 # 设置权限
-ssh user@your-vps-ip "sudo chown -R www-data:www-data /var/www/polarsite-toolkit && sudo chmod -R 755 /var/www/polarsite-toolkit"
+ssh user@your-vps-ip "sudo chown -R www-data:www-data /var/www/polarsite && sudo chmod -R 755 /var/www/polarsite"
 ```
 
 #### 方法B: 使用Git克隆
 ```bash
 # 在VPS上创建目录
-sudo mkdir -p /var/www/polarsite-toolkit
-sudo chown $USER:$USER /var/www/polarsite-toolkit
+sudo mkdir -p /var/www/polarsite
+sudo chown $USER:$USER /var/www/polarsite
 
 # 克隆项目 (如果有Git仓库)
-cd /var/www/polarsite-toolkit
+cd /var/www/polarsite
 git clone your-repo-url .
 ```
 
 #### 方法C: 直接下载
 ```bash
 # 在VPS上下载文件
-sudo mkdir -p /var/www/polarsite-toolkit
-cd /var/www/polarsite-toolkit
+sudo mkdir -p /var/www/polarsite
+cd /var/www/polarsite
 
 # 使用wget下载压缩包 (如果有提供)
-wget https://your-domain.com/polarsite-toolkit.zip
-unzip polarsite-toolkit.zip
-rm polarsite-toolkit.zip
+wget https://your-domain.com/polarsite.zip
+unzip polarsite.zip
+rm polarsite.zip
 
 # 设置权限
-sudo chown -R www-data:www-data /var/www/polarsite-toolkit
-sudo chmod -R 755 /var/www/polarsite-toolkit
+sudo chown -R www-data:www-data /var/www/polarsite
+sudo chmod -R 755 /var/www/polarsite
 ```
 
 ### 3. 配置Nginx
@@ -52,7 +52,7 @@ sudo chmod -R 755 /var/www/polarsite-toolkit
 创建站点配置文件：
 
 ```bash
-sudo nano /etc/nginx/sites-available/polarsite-toolkit
+sudo nano /etc/nginx/sites-available/polarsite
 ```
 
 添加以下配置：
@@ -72,7 +72,7 @@ server {
     listen [::]:443 ssl http2;
     server_name your-domain.com www.your-domain.com;
     
-    root /var/www/polarsite-toolkit;
+    root /var/www/polarsite;
     index index.html;
     
     # SSL配置
@@ -119,7 +119,7 @@ server {
 
 启用站点：
 ```bash
-sudo ln -s /etc/nginx/sites-available/polarsite-toolkit /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/polarsite /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -183,8 +183,8 @@ brotli_types text/plain text/css application/javascript application/json image/s
 
 #### 优化文件权限
 ```bash
-sudo find /var/www/polarsite-toolkit -type f -exec chmod 644 {} \;
-sudo find /var/www/polarsite-toolkit -type d -exec chmod 755 {} \;
+sudo find /var/www/polarsite -type f -exec chmod 644 {} \;
+sudo find /var/www/polarsite -type d -exec chmod 755 {} \;
 ```
 
 ### 9. 监控和维护
@@ -210,14 +210,14 @@ sudo certbot renew --dry-run
 
 #### 权限问题
 ```bash
-sudo chown -R www-data:www-data /var/www/polarsite-toolkit
-sudo chmod -R 755 /var/www/polarsite-toolkit
+sudo chown -R www-data:www-data /var/www/polarsite
+sudo chmod -R 755 /var/www/polarsite
 ```
 
 #### SELinux问题 (CentOS/RHEL)
 ```bash
 sudo setsebool -P httpd_can_network_connect 1
-sudo restorecon -Rv /var/www/polarsite-toolkit
+sudo restorecon -Rv /var/www/polarsite
 ```
 
 #### 端口占用
@@ -279,7 +279,7 @@ sudo tail -f /var/log/nginx/error.log
 sudo certbot renew
 
 # 文件权限修复
-sudo chown -R www-data:www-data /var/www/polarsite-toolkit
+sudo chown -R www-data:www-data /var/www/polarsite
 ```
 
 ---
