@@ -6,9 +6,12 @@
   <title>E-Signature - Polarsite Toolkit</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230071e3'%3E%3C/rect%3E%3Ctext x='50' y='55' font-size='50' font-weight='600' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle' font-family='-apple-system, BlinkMacSystemFont, sans-serif'%3EP%3C/text%3E%3C/svg%3E">
   <meta name="description" content="Sign PDFs with handwritten signatures or digital stamps.">
+  
   <link href="css/output.css" rel="stylesheet">
   <script src="js/pdf-lib.min.js"></script>
   <script src="js/signature_pad.umd.min.js"></script>
+  <script src="js/pdf.min.js"></script>
+  
   <style>
     :root {
       --accent: #0071e3; --bg-light: #f5f5f7; --bg-dark: #111111; --card-light: #ffffff;
@@ -43,37 +46,49 @@
     @media (prefers-color-scheme: dark) {
       .btn-secondary { background-color: var(--card-dark); }
     }
-    .tab-btn { background-color: transparent; border: 1px solid var(--border-light); color: var(--text-sec-light); }
-    @media (prefers-color-scheme: dark) {
-      .tab-btn { border-color: var(--border-dark); }
+    
+    /* 预览区样式 */
+    #preview-container {
+      background-color: #525659;
+      border-radius: 12px;
+      min-height: 500px; /* 默认最小高度 */
+      overflow: hidden; 
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
-    .tab-btn.active { background-color: var(--accent); color: white; border-color: var(--accent); }
+    #pdf-scroll-view {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+    #pdf-wrapper {
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      background: white;
+    }
+    .interactive-sig {
+      position: absolute; cursor: grab; border: 2px dashed #0071e3; z-index: 50;
+    }
+    .interactive-sig:active { cursor: grabbing; border-style: solid; }
+    .interactive-sig img { width: 100%; height: 100%; display: block; pointer-events: none; }
+    .resize-handle {
+      width: 12px; height: 12px; background: #0071e3; position: absolute; bottom: -6px; right: -6px;
+      cursor: se-resize; border-radius: 50%; border: 2px solid white; z-index: 51;
+    }
+    .delete-handle {
+      width: 20px; height: 20px; background: #ef4444; color: white; position: absolute; top: -10px; right: -10px;
+      cursor: pointer; border-radius: 50%; text-align: center; line-height: 18px; font-size: 14px; border: 2px solid white; z-index: 51;
+    }
+    
+    /* Tabs */
+    .tab-btn { background-color: transparent; opacity: 0.7; }
+    .tab-btn.active { opacity: 1; font-weight: 600; color: var(--accent); border-bottom: 2px solid var(--accent); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    #signature-pad {
-      border: 1px solid var(--border-light);
-      border-radius: 8px;
-      cursor: crosshair;
-    }
-    @media (prefers-color-scheme: dark) {
-      #signature-pad {
-        border-color: var(--border-dark);
-      }
-    }
-    #preview-box {
-      position: relative;
-      background-color: #f5f5f5;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    @media (prefers-color-scheme: dark) {
-      #preview-box {
-        background-color: #2a2a2a;
-      }
-    }
-    #sig-preview-icon {
-      transition: all 0.2s ease;
-    }
   </style>
 </head>
 <body class="antialiased">
@@ -91,7 +106,7 @@
         <a href="index.html" class="nav-link" data-en="Home" data-zh="首页">Home</a>
         <a href="about.html" class="nav-link" data-en="About" data-zh="关于">About</a>
         <a href="privacy.html" class="nav-link" data-en="Privacy" data-zh="隐私">Privacy</a>
-        <a href="https://github.com/kayyoung/pdf-converter" target="_blank" class="text-secondary">GitHub</a>
+        <a href="https://github.com/kayyoung/polarsite" target="_blank" class="text-secondary">GitHub</a>
       </div>
       <button id="lang-toggle" class="rounded-lg bg-[var(--bg-light)] px-3 py-1.5 text-sm font-medium hover:opacity-80 dark:bg-[var(--card-dark)]">
         中文
@@ -99,90 +114,95 @@
     </nav>
   </header>
 
-  <main class="mx-auto max-w-6xl p-4 py-10 lg:px-8">
+  <main class="mx-auto max-w-7xl p-4 py-10 lg:px-8">
     <div class="text-center mb-12">
       <h1 class="text-4xl font-bold tracking-tighter mb-4" data-en="✍️ E-Signature" data-zh="✍️ 电子签名">✍️ 电子签名</h1>
-      <p class="text-lg text-secondary" data-en="Draw, type, or upload your signature and apply it to any PDF." data-zh="绘制、输入或上传您的签名，并将其应用到 PDF 文档中。">
-        Draw, type, or upload your signature and apply it to any PDF.
+      <p class="text-lg text-secondary" data-en="Draw, type, or upload signature and drag to place it on PDF." data-zh="绘制、输入或上传签名，然后拖拽到 PDF 上。">
+        Draw, type, or upload signature and drag to place it on PDF.
       </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
       <div class="space-y-6">
+        
         <div class="card p-6">
-          <h2 class="text-xl font-semibold mb-4" data-en="1. Create Signature" data-zh="1. 创建签名">1. Create Signature</h2>
+          <h2 class="text-xl font-semibold mb-4" data-en="1. Upload PDF" data-zh="1. 上传 PDF">1. Upload PDF</h2>
+          <input type="file" id="pdf-input" class="hidden" accept=".pdf">
+          <div id="drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors">
+            <p class="text-secondary" data-en="Click to upload PDF" data-zh="点击上传 PDF 文件">Click to upload PDF</p>
+          </div>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold mb-4" data-en="2. Create Signature" data-zh="2. 创建签名">2. Create Signature</h2>
           
-          <div class="flex gap-2 mb-4">
-            <button id="tab-draw" class="tab-btn active rounded-lg px-4 py-2 text-sm font-medium" data-en="Draw" data-zh="手绘">Draw</button>
-            <button id="tab-type" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Type" data-zh="输入">Type</button>
-            <button id="tab-upload" class="tab-btn rounded-lg px-4 py-2 text-sm font-medium" data-en="Upload" data-zh="上传">Upload</button>
+          <div class="flex border-b border-[var(--border-light)] dark:border-[var(--border-dark)] mb-4">
+            <button id="tab-draw" class="tab-btn active flex-1 pb-2 text-sm font-medium" data-en="Draw" data-zh="手绘">Draw</button>
+            <button id="tab-type" class="tab-btn flex-1 pb-2 text-sm font-medium" data-en="Type" data-zh="输入">Type</button>
+            <button id="tab-upload" class="tab-btn flex-1 pb-2 text-sm font-medium" data-en="Image" data-zh="图片">Image</button>
           </div>
 
           <div id="content-draw" class="tab-content active">
-            <canvas id="signature-pad" class="w-full h-48 bg-white dark:bg-gray-800"></canvas>
-            <button id="clear-sig" class="mt-2 btn-secondary rounded-lg px-4 py-2 text-sm font-medium" data-en="Clear Signature" data-zh="清除签名">Clear Signature</button>
+            <canvas id="signature-pad" class="w-full h-32 bg-white dark:bg-gray-800 border border-[var(--border-light)] rounded-lg mb-3 touch-none"></canvas>
+            <div class="flex gap-3">
+              <button id="clear-draw" class="flex-1 btn-secondary rounded-lg py-2 text-sm font-medium" data-en="Clear" data-zh="清除">Clear</button>
+              <button id="use-draw" class="flex-1 btn-primary rounded-lg py-2 text-sm font-medium" data-en="Use This" data-zh="使用签名">Use This</button>
+            </div>
           </div>
 
           <div id="content-type" class="tab-content">
-            <input type="text" id="text-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mb-2" placeholder="Type your name..." data-en-placeholder="Type your name..." data-zh-placeholder="在此输入姓名...">
-            <button id="generate-text" class="btn-primary rounded-lg px-4 py-2 text-sm font-medium" data-en="Generate" data-zh="生成">Generate</button>
-            <canvas id="text-preview" class="w-full h-32 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mt-2 bg-white dark:bg-gray-800"></canvas>
+            <input type="text" id="text-input" class="w-full p-3 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg mb-3 bg-transparent" placeholder="Your Name" data-en-placeholder="Your Name" data-zh-placeholder="您的姓名">
+            <button id="use-type" class="w-full btn-primary rounded-lg py-2 text-sm font-medium" data-en="Generate & Use" data-zh="生成并使用">Generate & Use</button>
           </div>
 
           <div id="content-upload" class="tab-content">
-            <input type="file" id="image-input" class="hidden" accept="image/*">
-            <div class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer" onclick="document.getElementById('image-input').click()">
-              <p class="text-secondary" data-en="Upload signature image..." data-zh="上传签名图片...">Upload signature image...</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card p-6">
-          <h2 class="text-xl font-semibold mb-4" data-en="2. Preview & Placement" data-zh="2. 预览与放置">2. 预览与放置</h2>
-          <div class="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium mb-1" data-en="Page Number:" data-zh="页码:">Page Number:</label>
-              <input type="number" id="page-num" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="1" min="1">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1" data-en="X Coordinate:" data-zh="X 坐标:">X Coordinate:</label>
-              <input type="number" id="x-coord" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="50">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1" data-en="Y Coordinate:" data-zh="Y 坐标:">Y Coordinate:</label>
-              <input type="number" id="y-coord" class="w-full p-2 border border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg" value="50">
-            </div>
-          </div>
-          
-          <div id="preview-box" class="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg aspect-[1/1.414] border border-[var(--border-light)] dark:border-[var(--border-dark)]">
-            <div id="preview-placeholder" class="absolute inset-0 flex items-center justify-center text-secondary" data-en="Upload a PDF to see a preview of the selected page." data-zh="上传 PDF 后可预览页面。">
-              Upload a PDF to see a preview of the selected page.
-            </div>
-            <div id="sig-preview-icon" class="absolute w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs" style="display: none; transform: translate(-50%, 50%);">✍️</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-6">
-        <div class="card p-6">
-          <h2 class="text-xl font-semibold mb-4" data-en="3. Upload PDF & Sign" data-zh="3. 上传 PDF 并签名">3. 上传 PDF 并签名</h2>
-          
-          <input type="file" id="pdf-input" class="hidden" accept=".pdf">
-          <div id="pdf-drop-zone" class="border-2 border-dashed border-[var(--border-light)] dark:border-[var(--border-dark)] rounded-lg p-8 text-center cursor-pointer">
-            <p class="text-secondary" data-en="Drag & drop .pdf file here, or click." data-zh="拖拽 .pdf 文件到此处，或点击。">
-              Drag & drop .pdf file here, or click.
-            </p>
-          </div>
-          
-          <div class="mt-6 flex gap-4">
-            <button id="download-btn" class="flex-1 btn-primary rounded-lg px-4 py-3 text-sm font-medium" data-en="Download Signed PDF" data-zh="下载已签名的 PDF">
-              Download Signed PDF
+            <input type="file" id="img-input" class="hidden" accept="image/*">
+            <button onclick="document.getElementById('img-input').click()" class="w-full py-8 border-2 border-dashed border-[var(--border-light)] rounded-lg text-sm text-secondary hover:border-blue-500" data-en="Click to Upload Image" data-zh="点击上传图片">
+              Click to Upload Image
             </button>
           </div>
-          
-          <div id="status" class="mt-4 text-sm text-center text-secondary"></div>
+        </div>
+
+        <div class="card p-6">
+          <button id="download-btn" class="w-full btn-primary rounded-lg px-4 py-3 text-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled data-en="Download Signed PDF" data-zh="下载签名后的 PDF">
+            Download Signed PDF
+          </button>
+          <div id="status" class="mt-3 text-center text-sm text-secondary min-h-[20px]"></div>
+        </div>
+
+      </div>
+
+      <div class="lg:col-span-1">
+        <div id="preview-container">
+          <div class="flex justify-between items-center p-3 bg-gray-800 text-white text-sm z-10 shadow-md">
+             <div class="flex gap-4 items-center">
+                <span>Page <span id="curr-page">0</span> / <span id="total-pages">0</span></span>
+                <div class="flex items-center gap-2 bg-gray-700 rounded px-2">
+                   <button id="zoom-out" class="px-2 py-1 font-bold hover:text-blue-300">-</button>
+                   <span id="zoom-level">100%</span>
+                   <button id="zoom-in" class="px-2 py-1 font-bold hover:text-blue-300">+</button>
+                </div>
+             </div>
+             <div class="flex gap-2">
+                <button id="prev-page" class="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500 disabled:opacity-50">Prev</button>
+                <button id="next-page" class="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500 disabled:opacity-50">Next</button>
+             </div>
+          </div>
+
+          <div id="pdf-scroll-view">
+            <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400" data-en="Upload PDF to Preview" data-zh="上传 PDF 以预览">
+              <svg class="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <p>Upload PDF to Preview</p>
+            </div>
+            
+            <div id="pdf-wrapper" style="display:none;">
+               <canvas id="pdf-canvas"></canvas>
+               </div>
+          </div>
         </div>
       </div>
+
     </div>
   </main>
 
@@ -217,332 +237,233 @@
   </footer>
 
   <script>
-    // E-Signature Logic
-    class ESignature {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.js';
+
+    class App {
       constructor() {
-        // Elements
-        this.canvas = document.getElementById('signature-pad');
-        this.textCanvas = document.getElementById('text-preview');
-        this.textCtx = this.textCanvas.getContext('2d');
-        this.tabs = {
-          draw: document.getElementById('tab-draw'),
-          type: document.getElementById('tab-type'),
-          upload: document.getElementById('tab-upload')
-        };
-        this.contents = {
-          draw: document.getElementById('content-draw'),
-          type: document.getElementById('content-type'),
-          upload: document.getElementById('content-upload')
-        };
-        
-        this.textInput = document.getElementById('text-input');
-        this.imageInput = document.getElementById('image-input');
-        this.pdfInput = document.getElementById('pdf-input');
-        this.clearSigBtn = document.getElementById('clear-sig');
-        this.generateTextBtn = document.getElementById('generate-text');
-        this.pageNumInput = document.getElementById('page-num');
-        this.xCoordInput = document.getElementById('x-coord');
-        this.yCoordInput = document.getElementById('y-coord');
-        this.downloadBtn = document.getElementById('download-btn');
-        this.status = document.getElementById('status');
-        this.placeholder = document.getElementById('preview-placeholder'); // <--- 修复点：添加对预览占位符的引用
-        
-        // State
-        this.signaturePad = null;
-        this.currentTab = 'draw';
+        this.pdfDoc = null;
         this.pdfBytes = null;
-        this.pdfFile = null;
-        this.uploadedSignature = null;
-        this.sigImageBytes = null;
-        this.sigImageType = 'png';
+        this.pageNum = 1;
+        this.scale = 1.0; 
         
-        this.initialize();
-      }
-      
-      initialize() {
-        this.initializeTabs();
-        this.initializeSignaturePad();
-        this.initializeEventListeners();
-        this.updatePreviewIcon();
-      }
-      
-      initializeTabs() {
-        Object.keys(this.tabs).forEach(tabKey => {
-          this.tabs[tabKey].addEventListener('click', () => this.switchTab(tabKey));
-        });
-        this.switchTab('draw');
-      }
-      
-      switchTab(tabKey) {
-        // Update tab buttons
-        Object.keys(this.tabs).forEach(key => {
-          this.tabs[key].classList.remove('active');
-          this.contents[key].classList.remove('active');
-        });
+        this.wrapper = document.getElementById('pdf-wrapper');
+        this.canvas = document.getElementById('pdf-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.viewport = document.getElementById('pdf-scroll-view');
         
-        this.tabs[tabKey].classList.add('active');
-        this.contents[tabKey].classList.add('active');
-        this.currentTab = tabKey;
+        this.initPad();
+        this.bindEvents();
       }
-      
-      initializeSignaturePad() {
-        this.canvas.width = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
-        
-        this.signaturePad = new SignaturePad(this.canvas, {
-          backgroundColor: 'rgba(0,0,0,0)',
-          penColor: 'rgb(0, 0, 0)'
-        });
-        
-        // Resize canvas
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-      }
-      
-      resizeCanvas() {
+
+      initPad() {
+        const canvas = document.getElementById('signature-pad');
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        this.canvas.width = this.canvas.offsetWidth * ratio;
-        this.canvas.height = this.canvas.offsetHeight * ratio;
-        this.canvas.getContext('2d').scale(ratio, ratio);
-        this.signaturePad.clear();
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext('2d').scale(ratio, ratio);
+        this.pad = new SignaturePad(canvas, { backgroundColor: 'rgba(0,0,0,0)' });
       }
-      
-      initializeEventListeners() {
-        // Clear signature
-        this.clearSigBtn.addEventListener('click', () => this.signaturePad.clear());
-        
-        // Generate text signature
-        this.generateTextBtn.addEventListener('click', () => this.generateTextSignature());
-        
-        // Image upload
-        this.imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
-        
-        // PDF upload
-        this.pdfInput.addEventListener('change', (e) => this.handlePDFUpload(e.target.files[0]));
-        document.getElementById('pdf-drop-zone').addEventListener('click', () => this.pdfInput.click());
-        
-        // Coordinate inputs
-        [this.pageNumInput, this.xCoordInput, this.yCoordInput].forEach(input => {
-          input.addEventListener('input', () => this.updatePreviewIcon());
+
+      bindEvents() {
+        // 1. Upload (修复 ArrayBuffer Detached 错误)
+        document.getElementById('pdf-input').addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if(!file) return;
+          
+          const buffer = await file.arrayBuffer();
+          this.pdfBytes = buffer.slice(0); // 保存原始 Buffer 的副本用于下载 (关键修复点)
+          
+          const loadingTask = pdfjsLib.getDocument(buffer); // 使用原始 buffer (或副本) 进行渲染
+          this.pdfDoc = await loadingTask.promise;
+          
+          document.getElementById('total-pages').textContent = this.pdfDoc.numPages;
+          document.getElementById('empty-state').style.display = 'none';
+          this.wrapper.style.display = 'block';
+          document.getElementById('download-btn').disabled = false;
+          
+          this.pageNum = 1;
+          this.renderPage(true); // true = auto fit
         });
+
+        document.getElementById('drop-zone').onclick = () => document.getElementById('pdf-input').click();
+
+        // 2. Zoom & Nav
+        document.getElementById('zoom-in').onclick = () => { this.scale += 0.1; this.renderPage(); };
+        document.getElementById('zoom-out').onclick = () => { if(this.scale > 0.3) { this.scale -= 0.1; this.renderPage(); }};
+        document.getElementById('prev-page').onclick = () => { if(this.pageNum > 1) { this.pageNum--; this.renderPage(); }};
+        document.getElementById('next-page').onclick = () => { if(this.pageNum < this.pdfDoc.numPages) { this.pageNum++; this.renderPage(); }};
+
+        // 3. Tabs
+        ['draw', 'type', 'upload'].forEach(t => {
+            document.getElementById(`tab-${t}`).onclick = (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById(`content-${t}`).classList.add('active');
+            };
+        });
+
+        // 4. Signature Actions (Use This 按钮逻辑)
+        document.getElementById('clear-draw').onclick = () => this.pad.clear();
         
-        // Download button
-        this.downloadBtn.addEventListener('click', () => this.signPDF());
-      }
-      
-      generateTextSignature() {
-        const text = this.textInput.value.trim();
-        if (!text) return;
-        
-        // Resize canvas
-        this.textCanvas.width = this.textCanvas.offsetWidth;
-        this.textCanvas.height = this.textCanvas.offsetHeight;
-        
-        // Clear canvas
-        this.textCtx.clearRect(0, 0, this.textCanvas.width, this.textCanvas.height);
-        
-        // Draw text
-        this.textCtx.fillStyle = 'black';
-        this.textCtx.font = '30px "Comic Sans MS", cursive';
-        this.textCtx.textAlign = 'left';
-        this.textCtx.textBaseline = 'middle';
-        this.textCtx.fillText(text, 10, this.textCanvas.height / 2);
-        
-        // Convert to blob for signing
-        this.textCanvas.toBlob((blob) => {
-          this.uploadedSignature = blob;
-          this.sigImageType = 'png';
-        }, 'image/png');
-      }
-      
-      handleImageUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          this.uploadedSignature = file;
-          this.sigImageType = file.type.includes('jpeg') ? 'jpg' : 'png';
+        const addSig = (url) => this.createSigElement(url);
+
+        document.getElementById('use-draw').onclick = () => {
+            if(this.pad.isEmpty()) return alert('Please draw first');
+            addSig(this.pad.toDataURL());
         };
-        reader.readAsArrayBuffer(file);
-      }
-      
-      async handlePDFUpload(file) {
-        if (!file || !file.type.includes('pdf')) {
-          this.showStatus('Please upload a PDF file.', true);
-          return;
-        }
-        
-        this.pdfFile = file;
-        this.showStatus('Loading PDF...');
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          this.pdfBytes = e.target.result;
-          try {
-            const pdfDoc = await PDFLib.PDFDocument.load(this.pdfBytes);
-            this.updatePreview(pdfDoc);
-            this.showStatus('PDF loaded. Ready to sign.');
-          } catch (error) {
-            console.error('PDF load error:', error);
-            // 之前由于 this.placeholder 引起错误，但现在已修复，如果还有错，就是PDF本身的问题
-            this.showStatus('Failed to load PDF.', true); 
-          }
+
+        document.getElementById('use-type').onclick = () => {
+            const text = document.getElementById('text-input').value;
+            if(!text) return;
+            const c = document.createElement('canvas');
+            const cx = c.getContext('2d');
+            c.width = 600; c.height = 150;
+            cx.font = '60px sans-serif';
+            cx.fillText(text, 10, 100);
+            addSig(c.toDataURL());
         };
-        reader.readAsArrayBuffer(file);
+
+        document.getElementById('img-input').onchange = (e) => {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = ev => addSig(ev.target.result);
+                r.readAsDataURL(f);
+            }
+        };
+
+        // 5. Download
+        document.getElementById('download-btn').onclick = () => this.download();
       }
-      
-      updatePreview(pdfDoc) {
-        if (!pdfDoc) return;
+
+      async renderPage(autoFit = false) {
+        if(!this.pdfDoc) return;
+        const page = await this.pdfDoc.getPage(this.pageNum);
+        const vpBase = page.getViewport({ scale: 1 });
         
-        const pages = pdfDoc.getPages();
-        const pageNum = Math.min(Math.max(1, parseInt(this.pageNumInput.value) || 1), pages.length);
-        const page = pages[pageNum - 1];
-        const { width, height } = page.getSize();
-        
-        // Update preview box aspect ratio
-        const previewBox = document.getElementById('preview-box');
-        previewBox.style.aspectRatio = `${width}/${height}`;
-        
-        // Hide placeholder (现在 this.placeholder 有定义，不会报错)
-        this.placeholder.style.display = 'none';
-        
-        // Update preview icon position
-        this.updatePreviewIcon();
-      }
-      
-      updatePreviewIcon() {
-        const previewIcon = document.getElementById('sig-preview-icon');
-        const x = parseInt(this.xCoordInput.value) || 50;
-        const y = parseInt(this.yCoordInput.value) || 50;
-        
-        previewIcon.style.left = x + 'px';
-        previewIcon.style.bottom = y + 'px';
-        previewIcon.style.display = 'flex';
-      }
-      
-      async signPDF() {
-        // Check if signature exists
-        let signatureData = null;
-        
-        if (this.currentTab === 'draw') {
-          if (this.signaturePad.isEmpty()) {
-            this.showStatus('Please create a signature first.', true);
-            return;
-          }
-          signatureData = this.signaturePad.toDataURL('image/png');
-        } else if (this.currentTab === 'type') {
-          if (!this.textInput.value.trim()) {
-            this.showStatus('Please enter text for signature.', true);
-            return;
-          }
-          // For type, ensure the canvas drawing is up to date
-          this.generateTextSignature(); 
-          // Check again after generation
-          if (!this.textInput.value.trim()) { // A simple check to ensure some text was there
-            this.showStatus('Signature generation failed.', true);
-            return;
-          }
-        } else if (this.currentTab === 'upload') {
-          if (!this.uploadedSignature) {
-            this.showStatus('Please upload a signature image.', true);
-            return;
-          }
+        if(autoFit) {
+            // 自适应逻辑：宽度适应容器，高度自适应滚动
+            const containerWidth = this.viewport.clientWidth - 80; // 减去 padding
+            this.scale = containerWidth / vpBase.width;
+            this.scale = Math.min(this.scale, 1.5); // 限制最大缩放倍数
         }
         
-        if (!this.pdfBytes) {
-          this.showStatus('Please upload a PDF file first.', true);
-          return;
-        }
+        const vp = page.getViewport({ scale: this.scale });
+        this.canvas.width = vp.width;
+        this.canvas.height = vp.height;
+        this.wrapper.style.width = vp.width + 'px';
+        this.wrapper.style.height = vp.height + 'px';
         
-        this.showStatus('Signing PDF...');
-        this.downloadBtn.disabled = true;
+        await page.render({ canvasContext: this.ctx, viewport: vp }).promise;
+        
+        document.getElementById('curr-page').textContent = this.pageNum;
+        document.getElementById('zoom-level').textContent = Math.round(this.scale * 100) + '%';
+      }
+
+      createSigElement(dataUrl) {
+        if(!this.pdfDoc) return alert('Upload PDF first');
+        const div = document.createElement('div');
+        div.className = 'interactive-sig';
+        div.style.left = '50px'; div.style.top = '50px'; div.style.width = '150px';
+        
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.onload = () => div.style.height = (150 * img.naturalHeight / img.naturalWidth) + 'px';
+        
+        const del = document.createElement('div');
+        del.className = 'delete-handle';
+        del.innerHTML = '×';
+        del.onclick = (e) => { e.stopPropagation(); div.remove(); };
+        
+        const res = document.createElement('div');
+        res.className = 'resize-handle';
+        
+        div.append(img, del, res);
+        this.wrapper.appendChild(div);
+        
+        this.makeDraggable(div, res);
+      }
+
+      makeDraggable(el, handle) {
+        let isDrag = false, isRes = false;
+        let startX, startY, startW, startL, startT;
+
+        el.onmousedown = (e) => {
+            if(e.target === handle || e.target.className === 'delete-handle') return;
+            isDrag = true;
+            startX = e.clientX; startY = e.clientY;
+            startL = el.offsetLeft; startT = el.offsetTop;
+            e.preventDefault();
+        };
+
+        handle.onmousedown = (e) => {
+            isRes = true;
+            startX = e.clientX;
+            startW = el.offsetWidth;
+            e.stopPropagation(); e.preventDefault();
+        };
+
+        window.onmousemove = (e) => {
+            if(isDrag) {
+                el.style.left = (startL + e.clientX - startX) + 'px';
+                el.style.top = (startT + e.clientY - startY) + 'px';
+            }
+            if(isRes) {
+                const dx = e.clientX - startX;
+                const w = Math.max(30, startW + dx);
+                el.style.width = w + 'px';
+                const img = el.querySelector('img');
+                if(img) el.style.height = (w * img.naturalHeight / img.naturalWidth) + 'px';
+            }
+        };
+
+        window.onmouseup = () => { isDrag = false; isRes = false; };
+      }
+
+      async download() {
+        if(!this.pdfBytes) return;
+        document.getElementById('status').textContent = 'Generating PDF...';
         
         try {
-          const pdfDoc = await PDFLib.PDFDocument.load(this.pdfBytes);
-          
-          // Get signature image
-          let sigImage;
-          if (this.currentTab === 'upload') {
-            const sigBytes = await this.uploadedSignature.arrayBuffer();
-            if (this.sigImageType === 'jpg') {
-              sigImage = await pdfDoc.embedJpg(sigBytes);
-            } else {
-              sigImage = await pdfDoc.embedPng(sigBytes);
+            // 使用保存的原始 buffer副本 (已修复 ArrayBuffer detached)
+            const pdfDoc = await PDFLib.PDFDocument.load(this.pdfBytes);
+            const page = pdfDoc.getPages()[this.pageNum - 1];
+            const { height } = page.getSize();
+            
+            // 计算缩放比 (PDF点数 / Canvas像素)
+            const ratio = page.getSize().width / this.canvas.width;
+            
+            const sigs = this.wrapper.querySelectorAll('.interactive-sig');
+            for(const el of sigs) {
+                const img = el.querySelector('img');
+                const rect = el.getBoundingClientRect();
+                const wrap = this.wrapper.getBoundingClientRect();
+                
+                const x = (rect.left - wrap.left) * ratio;
+                const w = el.offsetWidth * ratio;
+                const h = el.offsetHeight * ratio;
+                const y = height - ((rect.top - wrap.top) * ratio) - h; // Y轴从底部开始
+                
+                const embed = await pdfDoc.embedPng(img.src);
+                page.drawImage(embed, { x, y, width: w, height: h });
             }
-          } else {
-            // For draw and type tabs, convert data URL to bytes
-            // If draw tab, use signaturePad.toDataURL()
-            // If type tab, use textCanvas.toDataURL()
-            const dataUrl = this.currentTab === 'draw' ? this.signaturePad.toDataURL('image/png') : this.textCanvas.toDataURL('image/png');
-
-            const response = await fetch(dataUrl);
-            const sigBytes = await response.arrayBuffer();
-            sigImage = await pdfDoc.embedPng(sigBytes);
-          }
-          
-          // Get placement coordinates
-          const pageNum = Math.max(1, parseInt(this.pageNumInput.value) || 1);
-          const x = parseInt(this.xCoordInput.value) || 50;
-          const y = parseInt(this.yCoordInput.value) || 50;
-          
-          const pages = pdfDoc.getPages();
-          if (pageNum > pages.length) {
-            this.showStatus('Page number exceeds total pages.', true);
-            return;
-          }
-          
-          const page = pages[pageNum - 1];
-          
-          // Scale and place signature
-          // 使用 0.2 的缩放比例
-          const sigDims = sigImage.scale(0.2); 
-          page.drawImage(sigImage, {
-            x: x,
-            y: page.getHeight() - y - sigDims.height, // PDF coordinates are from bottom
-            width: sigDims.width,
-            height: sigDims.height,
-          });
-          
-          // Generate signed PDF
-          const pdfBytes = await pdfDoc.save();
-          
-          // Download
-          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = 'signed_' + this.pdfFile.name;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          this.showStatus('PDF signed successfully!');
-          
-        } catch (error) {
-          console.error('Signing error:', error);
-          this.showStatus('Failed to sign PDF. Please try again.', true);
-        } finally {
-          this.downloadBtn.disabled = false;
-        }
-      }
-      
-      showStatus(message, isError = false) {
-        this.status.textContent = message;
-        this.status.style.color = isError ? '#ff3b30' : 'var(--text-sec-light)';
-        
-        if (!isError && message) {
-          setTimeout(() => {
-            if (this.status.textContent === message) {
-              this.status.textContent = '';
-            }
-          }, 3000);
+            
+            const bytes = await pdfDoc.save();
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'signed.pdf';
+            link.click();
+            document.getElementById('status').textContent = 'Done!';
+        } catch(e) {
+            console.error(e);
+            document.getElementById('status').textContent = 'Error saving.';
         }
       }
     }
-    
-    // Language Toggle System
+
+    // 语言初始化系统 (恢复标准版逻辑)
     let currentLang = 'en';
     const langToggle = document.getElementById('lang-toggle');
     
@@ -550,7 +471,6 @@
       currentLang = lang;
       document.documentElement.lang = lang;
       
-      // Update all elements with data attributes
       document.querySelectorAll('[data-en]').forEach(el => {
         if (lang === 'zh' && el.hasAttribute('data-zh')) {
           el.textContent = el.getAttribute('data-zh');
@@ -559,7 +479,6 @@
         }
       });
       
-      // Update placeholders
       document.querySelectorAll('[data-en-placeholder]').forEach(el => {
         if (lang === 'zh' && el.hasAttribute('data-zh-placeholder')) {
           el.setAttribute('placeholder', el.getAttribute('data-zh-placeholder'));
@@ -567,45 +486,32 @@
           el.setAttribute('placeholder', el.getAttribute('data-en-placeholder'));
         }
       });
-      
-      // Update button text
+
       langToggle.textContent = lang === 'en' ? '中文' : 'English';
-      
-      // Update page title
-      const title = document.querySelector('h1[data-en]');
-      if (title) {
-        document.title = lang === 'zh' && title.hasAttribute('data-zh') 
-          ? title.getAttribute('data-zh') + ' - Polarsite Toolkit'
-          : title.getAttribute('data-en') + ' - Polarsite Toolkit';
-      }
     }
     
     function toggleLanguage() {
       setLanguage(currentLang === 'en' ? 'zh' : 'en');
     }
     
-    // Initialize
+    // 初始化逻辑：检查本地存储 -> 浏览器设置 -> 默认英文
     langToggle.addEventListener('click', toggleLanguage);
-    
-    // Check for saved language preference
     const savedLang = localStorage.getItem('polarsite_lang');
     if (savedLang && ['en', 'zh'].includes(savedLang)) {
       setLanguage(savedLang);
     } else {
-      // Auto-detect language based on browser
       const browserLang = navigator.language || navigator.userLanguage;
       if (browserLang.startsWith('zh')) {
         setLanguage('zh');
       }
     }
     
-    // Save language preference
+    // 保存语言偏好
     window.addEventListener('beforeunload', () => {
       localStorage.setItem('polarsite_lang', currentLang);
     });
-    
-    // Initialize E-Signature
-    const eSignature = new ESignature();
+
+    new App();
   </script>
 </body>
 </html>
