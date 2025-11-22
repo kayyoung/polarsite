@@ -16,6 +16,7 @@
 ├── sheet.html          # 表格处理
 ├── watermark.html      # 去水印工具
 ├── sign.html           # 电子签名
+├── image.html          # 图片编辑器
 ├── about.html          # 关于页面
 ├── privacy.html        # 隐私政策
 └── README.md           # 说明文档
@@ -54,6 +55,12 @@
    - 文字签名
    - 图片签名上传
    - PDF签名应用
+ 
+ 6. **图片处理器** (image.html)
+   - 元数据去除
+   - 图片压缩
+   - 格式转换
+   - 尺寸调整
 
 ### 🌟 核心特性
 
