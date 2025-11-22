@@ -16,6 +16,7 @@
 ├── sheet.html          # 表格处理
 ├── watermark.html      # 去水印工具
 ├── sign.html           # 电子签名
+├── image.html          # 图片处理
 ├── about.html          # 关于页面
 ├── privacy.html        # 隐私政策
 └── README.md           # 说明文档
@@ -55,6 +56,12 @@
    - 图片签名上传
    - PDF签名应用
 
+6. **图片处理** (image.html)
+   - 去除元数据
+   - 压缩图片
+   - 格式转换
+   - 尺寸调整
+   
 ### 🌟 核心特性
 
 - **100%私密**: 所有处理在浏览器中完成，无数据上传
